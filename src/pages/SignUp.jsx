@@ -29,6 +29,11 @@ const SignUp = () => {
                     </div>
 
                     <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">username</label>
+                        <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter your username" />
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
                         <input type="email" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter your email" />
                     </div>
