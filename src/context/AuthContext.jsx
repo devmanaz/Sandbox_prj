@@ -16,6 +16,11 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!supabase) {
+            setLoading(false);
+            return;
+        }
+
         // Check active sessions and sets the user
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
@@ -33,6 +38,9 @@ export const AuthProvider = ({ children }) => {
 
     // Sign up function
     const signUp = async (email, password, userData) => {
+        if (!supabase) {
+            return { data: null, error: { message: 'Supabase is not configured. Please check your .env file.' } };
+        }
         try {
             // Create auth user with email confirmation disabled for development
             const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -47,7 +55,7 @@ export const AuthProvider = ({ children }) => {
             if (authError) {
                 // Handle rate limit errors specifically
                 if (authError.message.includes('rate limit') || authError.message.includes('Email rate limit exceeded')) {
-                    throw new Error('Too many signup attempts. Please wait a few minutes and try again, or disable email confirmation in Supabase settings.');
+                    throw new Error('Too many signup attempts. Please wait a few minutes and try again.');
                 }
                 throw authError;
             }
@@ -62,9 +70,9 @@ export const AuthProvider = ({ children }) => {
                             email: email,
                             username: userData.username,
                             full_name: userData.full_name,
-                            phone_number: userData.phone_number,
-                            date_of_birth: userData.date_of_birth,
-                            user_type: userData.user_type,
+                            phone_number: userData.phoneNumber,
+                            date_of_birth: userData.dateOfBirth,
+                            user_type: userData.userType,
                         },
                     ]);
 
@@ -79,6 +87,9 @@ export const AuthProvider = ({ children }) => {
 
     // Sign in function
     const signIn = async (username, password) => {
+        if (!supabase) {
+            return { data: null, error: { message: 'Supabase is not configured. Please check your .env file.' } };
+        }
         try {
             // First, get the email associated with the username
             const { data: userData, error: userError } = await supabase
@@ -107,6 +118,7 @@ export const AuthProvider = ({ children }) => {
 
     // Sign out function
     const signOut = async () => {
+        if (!supabase) return { error: null };
         const { error } = await supabase.auth.signOut();
         return { error };
     };
@@ -117,11 +129,19 @@ export const AuthProvider = ({ children }) => {
         signUp,
         signIn,
         signOut,
+        isConfigured: !!supabase,
     };
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {loading ? (
+                <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-slate-400 font-medium">Loading CodeSandbox...</p>
+                    </div>
+                </div>
+            ) : children}
         </AuthContext.Provider>
     );
 };

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { signIn } = useAuth();
+    const { signIn, isConfigured } = useAuth();
     const [formData, setFormData] = useState({
         username: '',
         password: ''
@@ -54,6 +54,24 @@ const Login = () => {
                     <h1 className="text-3xl font-bold text-gray-900">CodeSandbox</h1>
                     <p className="text-gray-500 mt-1">Scenario-Driven Coding Platform</p>
                 </div>
+
+                {!isConfigured && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-blue-800 font-semibold">
+                            <AlertCircle size={20} />
+                            <span>Development Mode</span>
+                        </div>
+                        <p className="text-sm text-blue-700">
+                            Supabase is not configured yet. Authentication features are disabled, but you can still access the dashboard!
+                        </p>
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="mt-2 text-sm font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                        >
+                            Skip to Dashboard →
+                        </button>
+                    </div>
+                )}
 
                 {error && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">

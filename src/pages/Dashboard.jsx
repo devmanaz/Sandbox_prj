@@ -42,14 +42,17 @@ const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor 
 );
 
 const Dashboard = () => {
-    const { user, signOut } = useAuth();
+    const { user, signOut, isConfigured } = useAuth();
     const navigate = useNavigate();
     const [userProfile, setUserProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!user);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            if (!user) return;
+            if (!user || !supabase) {
+                setLoading(false);
+                return;
+            }
 
             try {
                 const { data, error } = await supabase
@@ -88,11 +91,14 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right">
-                        <p className="text-gray-900 font-semibold">
-                            {loading ? 'Loading...' : userProfile?.username || 'User'}
+                        <p className="text-gray-900 font-semibold text-sm">
+                            {loading ? 'Loading...' : userProfile?.username || user?.email?.split('@')[0] || 'Guest User'}
                         </p>
                         {userProfile?.full_name && (
-                            <p className="text-gray-500 text-sm">{userProfile.full_name}</p>
+                            <p className="text-gray-500 text-xs">{userProfile.full_name}</p>
+                        )}
+                        {!user && !loading && (
+                            <p className="text-blue-500 text-xs font-medium">Development Mode</p>
                         )}
                     </div>
                     <button
@@ -104,6 +110,14 @@ const Dashboard = () => {
                     </button>
                 </div>
             </header>
+
+            {!isConfigured && (
+                <div className="bg-blue-600 text-white px-8 py-2 flex items-center justify-center gap-3 text-sm font-medium">
+                    <AlertCircle size={16} />
+                    <span>Supabase is not configured. Authentication features are disabled.</span>
+                    <Link to="/login" className="underline hover:text-blue-100">Configure now</Link>
+                </div>
+            )}
 
             <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
                 {/* Stats Row */}
