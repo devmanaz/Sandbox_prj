@@ -77,7 +77,10 @@ const Ide = () => {
             inherit: true,
             rules: [],
             colors: {
-                'editor.background': '#0f172a', // slate-900
+                'editor.background': '#060606', // deeper dark
+                'editor.lineHighlightBackground': '#ffffff08',
+                'editorLineNumber.foreground': '#4b5563',
+                'editorLineNumber.activeForeground': '#7c3aed',
             },
         });
         monaco.editor.setTheme('custom-dark');
@@ -85,38 +88,18 @@ const Ide = () => {
 
     const handleRunTests = () => {
         setIsRunning(true);
-        setOutput('Running tests...');
+        setOutput('Initializing scenario tests...');
 
         setTimeout(() => {
             const code = files['cart.js'].content;
             // Simple string check simulation
             if (code.includes('subtotal * (1 + this.taxRate)') || code.includes('subtotal + (subtotal * this.taxRate)')) {
-                setOutput(`> Running Tests...
-        
-✔ Tax Calculation (Passed)
-  Expected: 108.00
-  Received: 108.00
-
-✔ Multiple Items (Passed)
-✔ Empty Cart (Passed)
-
-All tests passed! 🚀`);
+                setOutput(`🚀 Scenario Tests Passed!\n\n✔ Tax Logic: Correct\n✔ State Persistence: Stable\n✔ Multi-item Calculation: Verified\n\nAll tests passed successfully! ✨`);
             } else {
-                setOutput(`> Running Tests...
-        
-✖ Tax Calculation (Failed)
-  Expected: 108.00
-  Received: 100.00
-  
-  Hint: You are returning subtotal without adding tax.
-
-✔ Multiple Items (Passed)
-✔ Empty Cart (Passed)
-
-Tests failed. Try again.`);
+                setOutput(`❌ Scenario Tests Failed\n\n✖ Tax Logic: Error\n  Expected: 108.00\n  Received: 100.00\n\n💡 Hint: Ensure you add the tax (subtotal * taxRate) to the base amount.`);
             }
             setIsRunning(false);
-        }, 1000);
+        }, 1500);
     };
 
     const handleEditorChange = (value) => {
@@ -130,84 +113,89 @@ Tests failed. Try again.`);
     };
 
     return (
-        <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden font-sans">
+        <div className="relative h-screen flex flex-col bg-[#030303] text-white overflow-hidden font-sans">
+            {/* Background Streaks */}
+            <div className="bg-streaks">
+                <div className="streak-1 opacity-20"></div>
+                <div className="streak-2 opacity-20"></div>
+            </div>
+
             {/* Header */}
-            <header className="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 flex-shrink-0">
-                <div className="flex items-center gap-4">
-                    <Link to="/dashboard" className="text-slate-400 hover:text-white flex items-center gap-1 text-sm font-medium">
-                        <ArrowLeft size={16} /> Back
+            <header className="h-20 glass-dark border-b border-white/5 flex items-center justify-between px-8 flex-shrink-0 z-50 backdrop-blur-3xl">
+                <div className="flex items-center gap-6">
+                    <Link to="/dashboard" className="p-2 glass rounded-xl text-slate-400 hover:text-white transition-all flex items-center justify-center">
+                        <ArrowLeft size={20} />
                     </Link>
-                    <div className="h-6 w-px bg-slate-700"></div>
-                    <div>
-                        <h1 className="font-bold text-lg">E-Commerce Cart Bug Fix</h1>
+                    <div className="h-8 w-px bg-white/10"></div>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-black text-lg tracking-tight uppercase">E-Commerce Total Fix</h1>
+                            <span className="bg-yellow-500/10 text-yellow-500 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-yellow-500/20 shadow-lg neon-border-magenta">
+                                Medium
+                            </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Scenario IDE v2.0</p>
                     </div>
-                    <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded text-xs font-semibold border border-yellow-500/20">
-                        Medium
-                    </span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
-                        className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white glass rounded-xl transition-all text-xs font-black uppercase tracking-widest"
                         onClick={() => setFiles(initialFiles)}
                     >
                         <RotateCcw size={16} /> Reset
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-sm font-medium">
+                    <button className="flex items-center gap-2 px-6 py-2 glass-dark border border-white/10 hover:border-white/30 text-white rounded-xl transition-all text-xs font-black uppercase tracking-widest">
                         <Save size={16} /> Save
                     </button>
                     <button
                         onClick={handleRunTests}
                         disabled={isRunning}
-                        className="flex items-center gap-2 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-8 py-2.5 bg-white text-[#030303] hover:bg-slate-200 rounded-xl transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-white/20"
                     >
-                        <Play size={16} /> {isRunning ? 'Running...' : 'Run Tests'}
+                        <Play size={16} fill="currentColor" /> {isRunning ? 'Running...' : 'Run Scenario'}
                     </button>
                 </div>
             </header>
 
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative z-10">
                 {/* Sidebar */}
-                <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0">
-                    <div className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Project Files</div>
-                    <div className="flex-1 overflow-y-auto">
+                <aside className="w-72 glass-dark border-r border-white/5 flex flex-col flex-shrink-0 backdrop-blur-3xl">
+                    <div className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">Project Files</div>
+                    <div className="flex-1 overflow-y-auto py-4">
                         {Object.keys(files).map((filename) => (
                             <button
                                 key={filename}
                                 onClick={() => setActiveFile(filename)}
-                                className={`w-full text-left px-4 py-2 flex items-center gap-2 text-sm transition-colors ${activeFile === filename
-                                        ? 'bg-blue-600/10 text-blue-400 border-r-2 border-blue-500'
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                                className={`w-[90%] mx-auto mb-1 rounded-xl text-left px-4 py-3 flex items-center gap-3 text-sm transition-all ${activeFile === filename
+                                    ? 'bg-white/10 text-white border border-white/10 shadow-lg'
+                                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
                                     }`}
                             >
-                                {filename.endsWith('.js') ? <FileCode size={16} /> : <FileText size={16} />}
-                                {filename}
+                                {filename.endsWith('.js') ? <FileCode size={18} className="text-purple-400" /> : <FileText size={18} className="text-slate-400" />}
+                                <span className="font-bold tracking-tight">{filename}</span>
                             </button>
                         ))}
                     </div>
 
-                    <div className="border-t border-slate-800">
-                        <div className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Test Cases</div>
-                        <div className="px-2 pb-4 space-y-2">
-                            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-800">
-                                <h4 className="text-sm font-semibold text-slate-300 mb-1">Tax Calculation</h4>
-                                <p className="text-xs text-slate-500">Total should include tax added to subtotal</p>
+                    <div className="border-t border-white/5">
+                        <div className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">Scenario Constraints</div>
+                        <div className="px-4 py-4 space-y-3">
+                            <div className="p-4 glass rounded-2xl border-white/5 group hover:border-purple-500/30 transition-all">
+                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Tax Calculation</h4>
+                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Tax rate (0.08) must be applied to the final subtotal.</p>
                             </div>
-                            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 opacity-60">
-                                <h4 className="text-sm font-semibold text-slate-300 mb-1">Multiple Items</h4>
-                                <p className="text-xs text-slate-500">Should handle multiple items correctly</p>
-                            </div>
-                            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 opacity-60">
-                                <h4 className="text-sm font-semibold text-slate-300 mb-1">Empty Cart</h4>
-                                <p className="text-xs text-slate-500">Should return 0.00 for empty cart</p>
+                            <div className="p-4 glass rounded-2xl border-white/5 opacity-50">
+                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Edge Cases</h4>
+                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Handle null values and zero quantities safely.</p>
                             </div>
                         </div>
                     </div>
                 </aside>
 
                 {/* Editor Area */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex-1 flex flex-col min-w-0 bg-[#060606]">
                     <div className="flex-1 relative">
                         <Editor
                             height="100%"
@@ -218,21 +206,32 @@ Tests failed. Try again.`);
                             theme="custom-dark"
                             options={{
                                 minimap: { enabled: false },
-                                padding: { top: 20 },
-                                fontSize: 14,
+                                padding: { top: 30 },
+                                fontSize: 16,
+                                fontFamily: "'JetBrains Mono', monospace",
                                 scrollBeyondLastLine: false,
                                 automaticLayout: true,
+                                lineNumbers: 'on',
+                                glyphMargin: false,
+                                folding: true,
+                                lineDecorationsWidth: 10,
+                                lineNumbersMinChars: 3,
                             }}
                             onMount={handleEditorDidMount}
                         />
                     </div>
 
                     {/* Output Console */}
-                    <div className="h-48 bg-black border-t border-slate-800 flex flex-col flex-shrink-0">
-                        <div className="px-4 py-2 border-b border-slate-800 flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Output</span>
+                    <div className="h-64 glass-dark border-t border-white/5 flex flex-col flex-shrink-0 backdrop-blur-3xl">
+                        <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Compiler Output</span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Ready</span>
+                            </div>
                         </div>
-                        <div className="flex-1 p-4 font-mono text-sm overflow-auto text-slate-300 whitespace-pre-wrap">
+                        <div className="flex-1 p-6 font-mono text-sm overflow-auto text-slate-300 leading-relaxed scrollbar-hide">
+                            <div className="text-slate-500 mb-2">$ scenario-shell --run-tests</div>
                             {output}
                         </div>
                     </div>

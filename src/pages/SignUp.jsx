@@ -102,128 +102,132 @@ const SignUp = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 font-sans py-10">
-            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="text-blue-600 mb-2">
-                        <Code2 size={48} />
+        <div className="relative min-h-screen flex items-center justify-center bg-[#030303] overflow-hidden font-sans py-12 px-4">
+            {/* Background Streaks */}
+            <div className="bg-streaks">
+                <div className="streak-1"></div>
+                <div className="streak-2"></div>
+            </div>
+
+            <div className="glass-dark p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/10 relative z-10 backdrop-blur-3xl">
+                <div className="flex flex-col items-center mb-10">
+                    <div className="text-white mb-3 p-3 glass rounded-2xl neon-border-magenta">
+                        <Code2 size={40} className="text-magenta-500" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">CodeSandbox</h1>
-                    <p className="text-gray-500 mt-1">Create your account</p>
+                    <h1 className="text-4xl font-bold text-white tracking-tight">CodeSandbox</h1>
+                    <p className="text-slate-400 mt-2 text-sm uppercase tracking-widest font-semibold">Join the scenario</p>
                 </div>
 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400">
                         <AlertCircle size={20} />
                         <span className="text-sm">{error}</span>
                     </div>
                 )}
 
                 {success && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
+                    <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center gap-2 text-green-400">
                         <CheckCircle size={20} />
-                        <span className="text-sm">Account created successfully! Redirecting to login...</span>
+                        <span className="text-sm">Account created! Redirecting...</span>
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Full Name <span className="text-red-500">*</span>
+                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            Full Name <span className="text-magenta-500">*</span>
                         </label>
                         <input
                             type="text"
                             name="fullName"
                             value={formData.fullName}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Enter your name"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-slate-600"
+                            placeholder="Your name"
                             disabled={loading || success}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Username <span className="text-red-500">*</span>
+                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            Username <span className="text-magenta-500">*</span>
                         </label>
                         <input
                             type="text"
                             name="username"
                             value={formData.username}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Enter your username"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-slate-600"
+                            placeholder="username"
                             disabled={loading || success}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Email <span className="text-red-500">*</span>
+                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            Email <span className="text-magenta-500">*</span>
                         </label>
                         <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Enter your email"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-slate-600"
+                            placeholder="email@example.com"
                             disabled={loading || success}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+                            <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Phone</label>
                             <input
                                 type="tel"
                                 name="phoneNumber"
                                 value={formData.phoneNumber}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter phone"
+                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-slate-600"
+                                placeholder="+123..."
                                 disabled={loading || success}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Date of Birth</label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="dateOfBirth"
-                                    value={formData.dateOfBirth}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    disabled={loading || success}
-                                />
-                            </div>
+                            <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">DOB</label>
+                            <input
+                                type="date"
+                                name="dateOfBirth"
+                                value={formData.dateOfBirth}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-slate-600"
+                                disabled={loading || success}
+                            />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Password <span className="text-red-500">*</span>
+                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            Password <span className="text-magenta-500">*</span>
                         </label>
                         <input
                             type="password"
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-2xl tracking-widest"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white text-xl tracking-widest placeholder-slate-600"
                             placeholder="••••••••"
                             disabled={loading || success}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            User Type <span className="text-red-500">*</span>
+                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            User Type <span className="text-magenta-500">*</span>
                         </label>
                         <select
                             name="userType"
                             value={formData.userType}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white bg-[#030303]"
                             disabled={loading || success}
                         >
                             <option value="">Select type</option>
@@ -235,15 +239,15 @@ const SignUp = () => {
                     <button
                         type="submit"
                         disabled={loading || success}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors duration-200 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-white text-[#030303] hover:bg-slate-200 font-bold py-4 rounded-xl transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-white/20"
                     >
-                        {loading ? 'Creating Account...' : success ? 'Success!' : 'Sign Up'}
+                        {loading ? 'Creating Account...' : success ? 'Success!' : 'Join Now'}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center">
-                    <Link to="/login" className="text-gray-600 hover:text-blue-600 font-medium">
-                        Already have an account? <span className="text-blue-600">Login</span>
+                <div className="mt-8 text-center">
+                    <Link to="/login" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">
+                        Already have an account? <span className="text-purple-400 font-bold underline underline-offset-4">Sign In</span>
                     </Link>
                 </div>
             </div>
