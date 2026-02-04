@@ -110,7 +110,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <StatCard
                         title="Projects Available"
-                        value="3"
+                        value="5"
                         icon={Folder}
                         color="text-blue-500"
                     />
