@@ -1,19 +1,47 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Code2 } from 'lucide-react';
+import { Code2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { signIn } = useAuth();
     const [formData, setFormData] = useState({
-        username: 'trgt5',
+        username: '',
         password: ''
     });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Simulate login
-        navigate('/dashboard');
+        setError('');
+        setLoading(true);
+
+        // Validation
+        if (!formData.username || !formData.password) {
+            setError('Please fill in all fields');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const { data, error } = await signIn(formData.username, formData.password);
+
+            if (error) {
+                setError(error.message || 'Invalid username or password');
+                setLoading(false);
+                return;
+            }
+
+            if (data) {
+                navigate('/dashboard');
+            }
+        } catch (err) {
+            setError('An unexpected error occurred. Please try again.');
+            setLoading(false);
+        }
     };
 
     return (
@@ -27,6 +55,13 @@ const Login = () => {
                     <p className="text-gray-500 mt-1">Scenario-Driven Coding Platform</p>
                 </div>
 
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+                        <AlertCircle size={20} />
+                        <span className="text-sm">{error}</span>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -38,6 +73,7 @@ const Login = () => {
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             placeholder="Enter username"
+                            disabled={loading}
                         />
                     </div>
 
@@ -51,14 +87,16 @@ const Login = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-2xl tracking-widest"
                             placeholder="••••••••"
+                            disabled={loading}
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors duration-200"
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Login
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
 

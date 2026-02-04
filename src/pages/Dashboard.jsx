@@ -1,7 +1,9 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Code2, Folder, Trophy, CheckCircle, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../config/supabaseClient';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -40,6 +42,42 @@ const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor 
 );
 
 const Dashboard = () => {
+    const { user, signOut } = useAuth();
+    const navigate = useNavigate();
+    const [userProfile, setUserProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (!user) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('username, full_name, user_type')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                } else {
+                    setUserProfile(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserProfile();
+    }, [user]);
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
             {/* Header */}
@@ -49,11 +87,21 @@ const Dashboard = () => {
                     <h1 className="text-xl font-bold">CodeSandbox Platform</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                    <span className="text-gray-600">hedgedfeydey</span>
-                    <Link to="/login" className="flex items-center gap-2 text-red-500 hover:text-red-600">
+                    <div className="text-right">
+                        <p className="text-gray-900 font-semibold">
+                            {loading ? 'Loading...' : userProfile?.username || 'User'}
+                        </p>
+                        {userProfile?.full_name && (
+                            <p className="text-gray-500 text-sm">{userProfile.full_name}</p>
+                        )}
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors"
+                    >
                         <LogOut size={18} />
                         <span className="text-sm font-medium">Logout</span>
-                    </Link>
+                    </button>
                 </div>
             </header>
 
