@@ -148,7 +148,22 @@ const Dashboard = () => {
                             tests={4}
                             badgeColor="bg-red-100 text-red-800"
                         />
-                        {/* Added a placeholder 3rd card to match '3 Available' */}
+                        <ProjectCard
+                            title="String Reversal"
+                            description="Write a function that takes a string and returns it reversed"
+                            difficulty="Easy"
+                            files={1}
+                            tests={2}
+                            badgeColor="bg-green-100 text-green-800"
+                        />
+                        <ProjectCard
+                            title="Palindrome Checker"
+                            description="Check if a string is a palindrome, ignoring special characters"
+                            difficulty="Medium"
+                            files={1}
+                            tests={4}
+                            badgeColor="bg-yellow-100 text-yellow-800"
+                        />
                         <ProjectCard
                             title="API Rate Limiter"
                             description="Design a sliding window rate limiter for an API endpoint"
