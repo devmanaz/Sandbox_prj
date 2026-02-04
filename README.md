@@ -1,4 +1,4 @@
-# CodeSandbox Clone - Sandbox_prj
+# CodeSandbox - Sandbox_prj
 
 A powerful, browser-based coding platform built with React, Vite, and Tailwind CSS. This project provides a seamless IDE-like experience within the browser, featuring a sophisticated code editor (Monaco Engine), interactive dashboard, and secure user authentication.
 
