@@ -46,7 +46,7 @@ const Login = () => {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-[#030303] overflow-hidden font-sans">
+        <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-sans">
             {/* Background Streaks */}
             <div className="bg-streaks">
                 <div className="streak-1"></div>
@@ -56,7 +56,7 @@ const Login = () => {
             <div className="glass-dark p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/10 relative z-10 backdrop-blur-3xl">
                 <div className="flex flex-col items-center mb-10">
                     <div className="text-white mb-3 p-3 glass rounded-2xl neon-border-magenta">
-                        <Code2 size={40} className="text-magenta-500" />
+                        <Code2 size={40} className="text-accent-magenta" />
                     </div>
                     <h1 className="text-4xl font-bold text-white tracking-tight">CodeSandbox</h1>
                     <p className="text-slate-400 mt-2 text-sm uppercase tracking-widest font-semibold">Scenario IDE</p>
