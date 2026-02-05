@@ -69,6 +69,7 @@ const Ide = () => {
     const [files, setFiles] = useState(initialFiles);
     const [output, setOutput] = useState('No output yet. Click "Run Tests" to execute your code.');
     const [isRunning, setIsRunning] = useState(false);
+    const [testsPassed, setTestsPassed] = useState(false);
 
     // Initial theme setup on mount
     const handleEditorDidMount = (editor, monaco) => {
@@ -95,11 +96,17 @@ const Ide = () => {
             // Simple string check simulation
             if (code.includes('subtotal * (1 + this.taxRate)') || code.includes('subtotal + (subtotal * this.taxRate)')) {
                 setOutput(`🚀 Scenario Tests Passed!\n\n✔ Tax Logic: Correct\n✔ State Persistence: Stable\n✔ Multi-item Calculation: Verified\n\nAll tests passed successfully! ✨`);
+                setTestsPassed(true);
             } else {
                 setOutput(`❌ Scenario Tests Failed\n\n✖ Tax Logic: Error\n  Expected: 108.00\n  Received: 100.00\n\n💡 Hint: Ensure you add the tax (subtotal * taxRate) to the base amount.`);
             }
             setIsRunning(false);
         }, 1500);
+    };
+
+    const handleSubmit = () => {
+        alert('🎉 Scenario Submitted! Great job.');
+        // Here you could add logic to save to database or redirect
     };
 
     const handleEditorChange = (value) => {
@@ -155,6 +162,15 @@ const Ide = () => {
                     >
                         <Play size={16} fill="currentColor" /> {isRunning ? 'Running...' : 'Run Scenario'}
                     </button>
+
+                    {testsPassed && (
+                        <button
+                            onClick={handleSubmit}
+                            className="flex items-center gap-2 px-8 py-2.5 bg-magenta-500 text-white hover:bg-magenta-600 rounded-xl transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-magenta-500/20 neon-border-magenta animate-pulse"
+                        >
+                            <CheckCircle2 size={16} /> Submit Scenario
+                        </button>
+                    )}
                 </div>
             </header>
 
