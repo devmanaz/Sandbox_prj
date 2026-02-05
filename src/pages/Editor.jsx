@@ -105,8 +105,17 @@ const Ide = () => {
     };
 
     const handleSubmit = () => {
+        // Persist completion status
+        const completedProjects = JSON.parse(localStorage.getItem('completedProjects') || '[]');
+        const projectTitle = "E-Commerce Total Bug"; // This should ideally be dynamic based on the scenario
+
+        if (!completedProjects.includes(projectTitle)) {
+            completedProjects.push(projectTitle);
+            localStorage.setItem('completedProjects', JSON.stringify(completedProjects));
+        }
+
         alert('🎉 Scenario Submitted! Great job.');
-        // Here you could add logic to save to database or redirect
+        navigate('/dashboard');
     };
 
     const handleEditorChange = (value) => {

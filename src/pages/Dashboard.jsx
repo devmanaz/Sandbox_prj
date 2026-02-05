@@ -17,13 +17,20 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
     </div>
 );
 
-const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor }) => (
-    <div className="glass-dark p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-full group hover:border-purple-500/30 transition-all duration-500 relative overflow-hidden">
+const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor, isCompleted }) => (
+    <div className={`glass-dark p-8 rounded-3xl shadow-2xl border flex flex-col h-full group transition-all duration-500 relative overflow-hidden ${isCompleted ? 'border-green-500/30 shadow-green-500/5' : 'border-white/5 hover:border-purple-500/30'}`}>
         {/* Decorative Gradient */}
-        <div className="absolute -top-24 -right-24 w-48 height-48 bg-purple-600/10 blur-3xl rounded-full group-hover:bg-purple-600/20 transition-colors duration-500"></div>
+        <div className={`absolute -top-24 -right-24 w-48 height-48 blur-3xl rounded-full transition-colors duration-500 ${isCompleted ? 'bg-green-600/10' : 'bg-purple-600/10 group-hover:bg-purple-600/20'}`}></div>
 
         <div className="flex justify-between items-start mb-6 relative z-10">
-            <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{title}</h3>
+            <div className="flex flex-col">
+                <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{title}</h3>
+                {isCompleted && (
+                    <span className="text-green-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 mt-1">
+                        <CheckCircle size={10} /> Completed
+                    </span>
+                )}
+            </div>
             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${badgeColor} neon-border-magenta shadow-lg`}>
                 {difficulty}
             </span>
@@ -43,9 +50,9 @@ const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor 
 
         <Link
             to="/editor"
-            className="w-full bg-white text-[#030303] hover:bg-slate-200 font-bold py-4 rounded-2xl text-center transition-all duration-300 relative z-10 shadow-xl hover:shadow-white/10 mt-auto"
+            className={`w-full font-bold py-4 rounded-2xl text-center transition-all duration-300 relative z-10 shadow-xl mt-auto ${isCompleted ? 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20' : 'bg-white text-[#030303] hover:bg-slate-200 hover:shadow-white/10'}`}
         >
-            Launch Editor
+            {isCompleted ? 'Review Code' : 'Launch Editor'}
         </Link>
     </div>
 );
@@ -55,8 +62,13 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(!user);
+    const [completedProjects, setCompletedProjects] = useState([]);
 
     useEffect(() => {
+        // Load completed projects from localStorage
+        const completed = JSON.parse(localStorage.getItem('completedProjects') || '[]');
+        setCompletedProjects(completed);
+
         const fetchUserProfile = async () => {
             if (!user || !supabase) {
                 setLoading(false);
@@ -89,6 +101,11 @@ const Dashboard = () => {
         await signOut();
         navigate('/login');
     };
+
+    // Calculate score based on completion
+    const totalProjects = 5;
+    const submissionCount = completedProjects.length;
+    const avgScore = totalProjects > 0 ? (submissionCount / totalProjects) * 100 : 0;
 
     return (
         <div className="relative min-h-screen bg-[#030303] overflow-hidden font-sans pb-20">
@@ -142,19 +159,19 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <StatCard
                         title="Projects Available"
-                        value="05"
+                        value={String(totalProjects).padStart(2, '0')}
                         icon={Folder}
                         color="text-white"
                     />
                     <StatCard
                         title="Submissions"
-                        value="00"
+                        value={String(submissionCount).padStart(2, '0')}
                         icon={Trophy}
                         color="text-magenta-400"
                     />
                     <StatCard
                         title="Avg Score"
-                        value="0%"
+                        value={`${Math.round(avgScore)}%`}
                         icon={CheckCircle}
                         color="text-purple-400"
                     />
@@ -174,6 +191,7 @@ const Dashboard = () => {
                             files={3}
                             tests={3}
                             badgeColor="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                            isCompleted={completedProjects.includes("E-Commerce Total Bug")}
                         />
                         <ProjectCard
                             title="Auth Session Management"
@@ -182,6 +200,7 @@ const Dashboard = () => {
                             files={2}
                             tests={4}
                             badgeColor="bg-red-500/10 text-red-500 border border-red-500/20"
+                            isCompleted={completedProjects.includes("Auth Session Management")}
                         />
                         <ProjectCard
                             title="String Reverse Logic"
@@ -190,6 +209,7 @@ const Dashboard = () => {
                             files={1}
                             tests={2}
                             badgeColor="bg-green-500/10 text-green-500 border border-green-500/20"
+                            isCompleted={completedProjects.includes("String Reverse Logic")}
                         />
                         <ProjectCard
                             title="Smart Palindrome"
@@ -198,6 +218,7 @@ const Dashboard = () => {
                             files={1}
                             tests={4}
                             badgeColor="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                            isCompleted={completedProjects.includes("Smart Palindrome")}
                         />
                         <ProjectCard
                             title="Sliding Rate Limiter"
@@ -206,6 +227,7 @@ const Dashboard = () => {
                             files={1}
                             tests={5}
                             badgeColor="bg-red-500/10 text-red-500 border border-red-500/20"
+                            isCompleted={completedProjects.includes("Sliding Rate Limiter")}
                         />
                     </div>
                 </div>
