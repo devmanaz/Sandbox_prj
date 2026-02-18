@@ -11,8 +11,10 @@ import {
     FileJson,
     FileCode,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    MessageCircle
 } from 'lucide-react';
+import AIChatAssistant from '../components/AIChatAssistant';
 
 // Initial File Content
 const initialFiles = {
@@ -70,6 +72,8 @@ const Ide = () => {
     const [output, setOutput] = useState('No output yet. Click "Run Tests" to execute your code.');
     const [isRunning, setIsRunning] = useState(false);
     const [testsPassed, setTestsPassed] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
 
     // Initial theme setup on mount
     const handleEditorDidMount = (editor, monaco) => {
@@ -163,6 +167,15 @@ const Ide = () => {
                     </button>
                     <button className="flex items-center gap-2 px-6 py-2 glass-dark border border-white/10 hover:border-white/30 text-white rounded-xl transition-all text-xs font-black uppercase tracking-widest">
                         <Save size={16} /> Save
+                    </button>
+                    <button
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all text-xs font-black uppercase tracking-widest ${isChatOpen
+                            ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20'
+                            : 'glass-dark border border-white/10 hover:border-purple-500/30 text-white'
+                            }`}
+                    >
+                        <MessageCircle size={16} /> AI Assistant
                     </button>
                     <button
                         onClick={handleRunTests}
@@ -262,8 +275,20 @@ const Ide = () => {
                     </div>
                 </div>
             </div>
+
+            {/* AI Chat Assistant */}
+            <AIChatAssistant
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                codeContext={{
+                    activeFile,
+                    code: files[activeFile].content,
+                    scenario: 'E-Commerce Total Fix'
+                }}
+            />
         </div>
     );
 };
+
 
 export default Ide;
