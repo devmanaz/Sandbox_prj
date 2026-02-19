@@ -25,7 +25,7 @@ function App() {
                         }
                     />
                     <Route
-                        path="/editor"
+                        path="/editor/:scenarioId"
                         element={
                             <ProtectedRoute>
                                 <Editor />

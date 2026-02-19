@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Code2, Folder, Trophy, CheckCircle, LogOut } from 'lucide-react';
+import { Code2, Folder, Trophy, CheckCircle, LogOut, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabaseClient';
+import { scenarios } from '../data/scenarios';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className="glass-dark p-6 rounded-2xl shadow-xl border border-white/5 flex items-center justify-between group hover:border-white/20 transition-all duration-500">
@@ -17,45 +18,49 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
     </div>
 );
 
-const ProjectCard = ({ title, description, difficulty, files, tests, badgeColor, isCompleted }) => (
-    <div className={`glass-dark p-8 rounded-3xl shadow-2xl border flex flex-col h-full group transition-all duration-500 relative overflow-hidden ${isCompleted ? 'border-green-500/30 shadow-green-500/5' : 'border-white/5 hover:border-purple-500/30'}`}>
-        {/* Decorative Gradient */}
-        <div className={`absolute -top-24 -right-24 w-48 height-48 blur-3xl rounded-full transition-colors duration-500 ${isCompleted ? 'bg-green-600/10' : 'bg-purple-600/10 group-hover:bg-purple-600/20'}`}></div>
+const ProjectCard = ({ id, title, description, difficulty, badgeColor, isCompleted }) => {
+    const fileCount = scenarios.find(s => s.id === id)?.files ? Object.keys(scenarios.find(s => s.id === id).files).length : 0;
 
-        <div className="flex justify-between items-start mb-6 relative z-10">
-            <div className="flex flex-col">
-                <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{title}</h3>
-                {isCompleted && (
-                    <span className="text-green-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 mt-1">
-                        <CheckCircle size={10} /> Completed
-                    </span>
-                )}
+    return (
+        <div className={`glass-dark p-8 rounded-3xl shadow-2xl border flex flex-col h-full group transition-all duration-500 relative overflow-hidden ${isCompleted ? 'border-green-500/30 shadow-green-500/5' : 'border-white/5 hover:border-purple-500/30'}`}>
+            {/* Decorative Gradient */}
+            <div className={`absolute -top-24 -right-24 w-48 h-48 blur-3xl rounded-full transition-colors duration-500 ${isCompleted ? 'bg-green-600/10' : 'bg-purple-600/10 group-hover:bg-purple-600/20'}`}></div>
+
+            <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className="flex flex-col">
+                    <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{title}</h3>
+                    {isCompleted && (
+                        <span className="text-green-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 mt-1">
+                            <CheckCircle size={10} /> Completed
+                        </span>
+                    )}
+                </div>
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${badgeColor} neon-border-magenta shadow-lg`}>
+                    {difficulty}
+                </span>
             </div>
-            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${badgeColor} neon-border-magenta shadow-lg`}>
-                {difficulty}
-            </span>
+            <p className="text-slate-400 text-sm mb-8 flex-grow leading-relaxed relative z-10">{description}</p>
+
+            <div className="flex items-center gap-6 text-xs font-bold text-slate-500 mb-8 relative z-10 uppercase tracking-widest">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                    <span>{fileCount} files</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-magenta-500"></div>
+                    <span>System Scenario</span>
+                </div>
+            </div>
+
+            <Link
+                to={`/editor/${id}`}
+                className={`w-full font-bold py-4 rounded-2xl text-center transition-all duration-300 relative z-10 shadow-xl mt-auto ${isCompleted ? 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20' : 'bg-white text-[#030303] hover:bg-slate-200 hover:shadow-white/10'}`}
+            >
+                {isCompleted ? 'Review Code' : 'Launch Editor'}
+            </Link>
         </div>
-        <p className="text-slate-400 text-sm mb-8 flex-grow leading-relaxed relative z-10">{description}</p>
-
-        <div className="flex items-center gap-6 text-xs font-bold text-slate-500 mb-8 relative z-10 uppercase tracking-widest">
-            <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                <span>{files} files</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-magenta-500"></div>
-                <span>{tests} tests</span>
-            </div>
-        </div>
-
-        <Link
-            to="/editor"
-            className={`w-full font-bold py-4 rounded-2xl text-center transition-all duration-300 relative z-10 shadow-xl mt-auto ${isCompleted ? 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20' : 'bg-white text-[#030303] hover:bg-slate-200 hover:shadow-white/10'}`}
-        >
-            {isCompleted ? 'Review Code' : 'Launch Editor'}
-        </Link>
-    </div>
-);
+    );
+};
 
 const Dashboard = () => {
     const { user, signOut, isConfigured } = useAuth();
@@ -103,7 +108,7 @@ const Dashboard = () => {
     };
 
     // Calculate score based on completion
-    const totalProjects = 5;
+    const totalProjects = scenarios.length;
     const submissionCount = completedProjects.length;
     const avgScore = totalProjects > 0 ? (submissionCount / totalProjects) * 100 : 0;
 
@@ -184,51 +189,17 @@ const Dashboard = () => {
                         <div className="h-px flex-grow bg-white/10"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        <ProjectCard
-                            title="E-Commerce Total Bug"
-                            description="Fix calculation errors in a complex multi-file shopping cart system."
-                            difficulty="Medium"
-                            files={3}
-                            tests={3}
-                            badgeColor="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                            isCompleted={completedProjects.includes("E-Commerce Total Bug")}
-                        />
-                        <ProjectCard
-                            title="Auth Session Management"
-                            description="Build a secure session validation layer with token handling."
-                            difficulty="Hard"
-                            files={2}
-                            tests={4}
-                            badgeColor="bg-red-500/10 text-red-500 border border-red-500/20"
-                            isCompleted={completedProjects.includes("Auth Session Management")}
-                        />
-                        <ProjectCard
-                            title="String Reverse Logic"
-                            description="Implement an optimized string reversal algorithm for large buffers."
-                            difficulty="Easy"
-                            files={1}
-                            tests={2}
-                            badgeColor="bg-green-500/10 text-green-500 border border-green-500/20"
-                            isCompleted={completedProjects.includes("String Reverse Logic")}
-                        />
-                        <ProjectCard
-                            title="Smart Palindrome"
-                            description="Detect palindromes while filtering out complex Unicode noise."
-                            difficulty="Medium"
-                            files={1}
-                            tests={4}
-                            badgeColor="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                            isCompleted={completedProjects.includes("Smart Palindrome")}
-                        />
-                        <ProjectCard
-                            title="Sliding Rate Limiter"
-                            description="Implement a high-performance rate limiting algorithm using buckets."
-                            difficulty="Hard"
-                            files={1}
-                            tests={5}
-                            badgeColor="bg-red-500/10 text-red-500 border border-red-500/20"
-                            isCompleted={completedProjects.includes("Sliding Rate Limiter")}
-                        />
+                        {scenarios.map((scenario) => (
+                            <ProjectCard
+                                key={scenario.id}
+                                id={scenario.id}
+                                title={scenario.title}
+                                description={scenario.description}
+                                difficulty={scenario.difficulty}
+                                badgeColor={scenario.badgeColor}
+                                isCompleted={completedProjects.includes(scenario.id)}
+                            />
+                        ))}
                     </div>
                 </div>
             </main>

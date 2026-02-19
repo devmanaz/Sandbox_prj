@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import Editor, { useMonaco } from '@monaco-editor/react';
 import {
     ArrowLeft,
@@ -15,65 +15,30 @@ import {
     MessageCircle
 } from 'lucide-react';
 import AIChatAssistant from '../components/AIChatAssistant';
-
-// Initial File Content
-const initialFiles = {
-    'cart.js': {
-        name: 'cart.js',
-        language: 'javascript',
-        content: `class ShoppingCart {
-  constructor() {
-    this.items = [];
-    this.taxRate = 0.08;
-  }
-
-  addItem(item) {
-    this.items.push(item);
-  }
-
-  removeItem(itemId) {
-    this.items = this.items.filter(item => item.id !== itemId);
-  }
-
-  // BUG: Tax is not being calculated correctly
-  calculateTotal() {
-    const subtotal = this.items.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-    
-    return subtotal;
-  }
-}`
-    },
-    'product.js': {
-        name: 'product.js',
-        language: 'javascript',
-        content: `class Product {
-  constructor(id, name, price) {
-    this.id = id;
-    this.name = name;
-    this.price = price;
-  }
-}`
-    },
-    'README.md': {
-        name: 'README.md',
-        language: 'markdown',
-        content: `# E-Commerce Cart Bug Fix
-
-The CalculateTotal method is currently ignoring the tax rate. 
-Please fix it so that it returns the subtotal plus tax.`
-    }
-};
+import { scenarios } from '../data/scenarios';
 
 const Ide = () => {
-    const [activeFile, setActiveFile] = useState('cart.js');
-    const [files, setFiles] = useState(initialFiles);
-    const [output, setOutput] = useState('No output yet. Click "Run Tests" to execute your code.');
+    const { scenarioId } = useParams();
+    const navigate = useNavigate();
+    const scenario = scenarios.find(s => s.id === scenarioId) || scenarios[0];
+
+    const [activeFile, setActiveFile] = useState(Object.keys(scenario.files)[0]);
+    const [files, setFiles] = useState(scenario.files);
+    const [output, setOutput] = useState('No output yet. Click "Run Scenario" to execute your code.');
     const [isRunning, setIsRunning] = useState(false);
     const [testsPassed, setTestsPassed] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
 
+    // Sync state when scenarioId changes
+    useEffect(() => {
+        const currentScenario = scenarios.find(s => s.id === scenarioId);
+        if (currentScenario) {
+            setFiles(currentScenario.files);
+            setActiveFile(Object.keys(currentScenario.files)[0]);
+            setTestsPassed(false);
+            setOutput('New scenario loaded. Ready to test.');
+        }
+    }, [scenarioId]);
 
     // Initial theme setup on mount
     const handleEditorDidMount = (editor, monaco) => {
@@ -96,25 +61,24 @@ const Ide = () => {
         setOutput('Initializing scenario tests...');
 
         setTimeout(() => {
-            const code = files['cart.js'].content;
-            // Simple string check simulation
-            if (code.includes('subtotal * (1 + this.taxRate)') || code.includes('subtotal + (subtotal * this.taxRate)')) {
-                setOutput(`🚀 Scenario Tests Passed!\n\n✔ Tax Logic: Correct\n✔ State Persistence: Stable\n✔ Multi-item Calculation: Verified\n\nAll tests passed successfully! ✨`);
+            // Find main logic file (usually .js)
+            const mainFileKey = Object.keys(files).find(f => f.endsWith('.js')) || Object.keys(files)[0];
+            const code = files[mainFileKey].content;
+
+            if (scenario.testCheck(code)) {
+                setOutput(`🚀 Scenario Tests Passed!\n\n✔ Logic: Correct\n✔ Expected Patterns: Found\n✔ Stability: Verified\n\nAll tests passed successfully! ✨`);
                 setTestsPassed(true);
             } else {
-                setOutput(`❌ Scenario Tests Failed\n\n✖ Tax Logic: Error\n  Expected: 108.00\n  Received: 100.00\n\n💡 Hint: Ensure you add the tax (subtotal * taxRate) to the base amount.`);
+                setOutput(`❌ Scenario Tests Failed\n\n✖ Logic: Error\n  Expected solution pattern not found.\n\n💡 Hint: ${scenario.constraints[0]}`);
             }
             setIsRunning(false);
         }, 1500);
     };
 
     const handleSubmit = () => {
-        // Persist completion status
         const completedProjects = JSON.parse(localStorage.getItem('completedProjects') || '[]');
-        const projectTitle = "E-Commerce Total Bug"; // This should ideally be dynamic based on the scenario
-
-        if (!completedProjects.includes(projectTitle)) {
-            completedProjects.push(projectTitle);
+        if (!completedProjects.includes(scenario.id)) {
+            completedProjects.push(scenario.id);
             localStorage.setItem('completedProjects', JSON.stringify(completedProjects));
         }
 
@@ -149,9 +113,9 @@ const Ide = () => {
                     <div className="h-8 w-px bg-white/10"></div>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-3">
-                            <h1 className="font-black text-lg tracking-tight uppercase">E-Commerce Total Fix</h1>
-                            <span className="bg-yellow-500/10 text-yellow-500 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-yellow-500/20 shadow-lg neon-border-magenta">
-                                Medium
+                            <h1 className="font-black text-lg tracking-tight uppercase">{scenario.title}</h1>
+                            <span className={`${scenario.badgeColor.split(' ').slice(0, 2).join(' ')} px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${scenario.badgeColor.split(' ').slice(4).join(' ')} shadow-lg neon-border-magenta`}>
+                                {scenario.difficulty}
                             </span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Scenario IDE v2.0</p>
@@ -161,7 +125,7 @@ const Ide = () => {
                 <div className="flex items-center gap-4">
                     <button
                         className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white glass rounded-xl transition-all text-xs font-black uppercase tracking-widest"
-                        onClick={() => setFiles(initialFiles)}
+                        onClick={() => setFiles(scenario.files)}
                     >
                         <RotateCcw size={16} /> Reset
                     </button>
@@ -220,14 +184,12 @@ const Ide = () => {
                     <div className="border-t border-white/5">
                         <div className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">Scenario Constraints</div>
                         <div className="px-4 py-4 space-y-3">
-                            <div className="p-4 glass rounded-2xl border-white/5 group hover:border-purple-500/30 transition-all">
-                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Tax Calculation</h4>
-                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Tax rate (0.08) must be applied to the final subtotal.</p>
-                            </div>
-                            <div className="p-4 glass rounded-2xl border-white/5 opacity-50">
-                                <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Edge Cases</h4>
-                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Handle null values and zero quantities safely.</p>
-                            </div>
+                            {scenario.constraints.map((constraint, idx) => (
+                                <div key={idx} className="p-4 glass rounded-2xl border-white/5 group hover:border-purple-500/30 transition-all">
+                                    <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Constraint {idx + 1}</h4>
+                                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{constraint}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </aside>
@@ -283,7 +245,7 @@ const Ide = () => {
                 codeContext={{
                     activeFile,
                     code: files[activeFile].content,
-                    scenario: 'E-Commerce Total Fix'
+                    scenario: scenario.title
                 }}
             />
         </div>
