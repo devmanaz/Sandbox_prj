@@ -12,7 +12,7 @@
   }
 
   body {
-    @apply bg-bg-dark text-white antialiased;
+    @apply bg-brand-dark text-white antialiased;
     background-image:
       radial-gradient(circle at 50% -20%, #3b0764 0%, transparent 50%),
       radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 40%);

@@ -141,11 +141,19 @@ const AIChatAssistant = ({ isOpen, onClose, codeContext }) => {
                                             setIsModelMenuOpen(false);
                                         }}
                                         className={`w-full text-left p-3 rounded-xl transition-all mb-1 last:mb-0 ${selectedModel === model.id
-                                                ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-white'
-                                                : 'hover:bg-white/5 text-slate-400 hover:text-white border border-transparent'
+                                            ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-white'
+                                            : 'hover:bg-white/5 text-slate-400 hover:text-white border border-transparent'
                                             }`}
                                     >
-                                        <div className="text-xs font-black uppercase tracking-tight mb-0.5">{model.name}</div>
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <div className="text-xs font-black uppercase tracking-tight">{model.name}</div>
+                                            <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-widest border ${model.provider === 'ollama'
+                                                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                                                : 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                                                }`}>
+                                                {model.provider === 'ollama' ? 'Local' : 'Cloud'}
+                                            </span>
+                                        </div>
                                         <div className="text-[10px] text-slate-500 font-medium leading-tight">{model.description}</div>
                                     </button>
                                 ))}

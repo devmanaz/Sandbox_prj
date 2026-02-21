@@ -7,7 +7,7 @@ export default {
     theme: {
         extend: {
             colors: {
-                'bg-dark': '#030303',
+                'brand-dark': '#030303',
                 'accent-purple': '#7c3aed',
                 'accent-magenta': '#d946ef',
             }

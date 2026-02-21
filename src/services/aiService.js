@@ -4,17 +4,21 @@
  */
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const PRIMARY_MODEL = 'gemini-1.5-flash';
-const FALLBACK_MODEL = 'gemini-1.5-flash';
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+const OLLAMA_BASE_URL = 'http://localhost:11434/api';
+
+const PRIMARY_MODEL = 'gemma3:1b';
+const FALLBACK_MODEL = 'gemma3:1b';
 
 /**
  * List of available models for the user to choose from
  */
 export const AVAILABLE_MODELS = [
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and efficient for most tasks' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Maximum intelligence for complex code' },
-    { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Preview)', description: 'Next-gen performance and speed' }
+    { id: 'gemma3:1b', name: 'Gemma 3 1B (Local)', description: 'Fast local Google model', provider: 'ollama' },
+    { id: 'llama3', name: 'Llama 3 (Local)', description: 'Powerful local model (needs pull)', provider: 'ollama' },
+    { id: 'mistral', name: 'Mistral (Local)', description: 'Balanced performance (needs pull)', provider: 'ollama' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast cloud-based AI', provider: 'gemini' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Maximum intelligence for complex tasks', provider: 'gemini' }
 ];
 
 /**
@@ -25,15 +29,16 @@ export const AVAILABLE_MODELS = [
  * @returns {Promise<string>} - AI response text
  */
 export const sendMessage = async (messages, codeContext = null, modelOverride = null) => {
-    let currentModel = modelOverride || PRIMARY_MODEL;
-    try {
-        // Build system instruction with code context
-        let systemInstruction = `You are a helpful AI coding assistant integrated into a coding sandbox platform. 
+    let currentModelId = modelOverride || PRIMARY_MODEL;
+    const modelConfig = AVAILABLE_MODELS.find(m => m.id === currentModelId) || AVAILABLE_MODELS[0];
+
+    // Build system instruction with code context
+    let systemInstruction = `You are a helpful AI coding assistant integrated into a coding sandbox platform. 
 You help users learn programming by answering questions, explaining code, debugging issues, and providing guidance.
 Be concise, friendly, and educational. Focus on helping users understand concepts rather than just giving answers.`;
 
-        if (codeContext) {
-            systemInstruction += `\n\nCurrent Coding Context:
+    if (codeContext) {
+        systemInstruction += `\n\nCurrent Coding Context:
 - Active File: ${codeContext.activeFile}
 - Scenario: ${codeContext.scenario || 'General coding practice'}
 - Current Code:
@@ -42,15 +47,25 @@ ${codeContext.code}
 \`\`\`
 
 Use this context to provide relevant, specific help.`;
-        }
+    }
 
-        // Convert messages to Gemini format and handle system instruction
+    if (modelConfig.provider === 'ollama') {
+        return sendOllamaRequest(messages, systemInstruction, modelConfig.id);
+    } else {
+        return sendGeminiRequest(messages, systemInstruction, modelConfig.id);
+    }
+};
+
+/**
+ * Handle Gemini Specific API Request
+ */
+const sendGeminiRequest = async (messages, systemInstruction, modelId) => {
+    try {
         let firstUserMessage = true;
         const geminiMessages = messages.map(msg => {
             let role = msg.role === 'assistant' ? 'model' : 'user';
             let content = msg.content;
 
-            // Prepend system instruction to the first user message for stability in v1
             if (firstUserMessage && role === 'user') {
                 content = `${systemInstruction}\n\n${content}`;
                 firstUserMessage = false;
@@ -62,7 +77,6 @@ Use this context to provide relevant, specific help.`;
             };
         });
 
-        // If no user message was found to prepend to, add a new one (should not happen)
         if (firstUserMessage) {
             geminiMessages.unshift({
                 role: 'user',
@@ -70,19 +84,14 @@ Use this context to provide relevant, specific help.`;
             });
         }
 
-        const API_URL = `${API_BASE_URL}/${currentModel}:generateContent?key=${GEMINI_API_KEY}`;
+        const API_URL = `${GEMINI_BASE_URL}/${modelId}:generateContent?key=${GEMINI_API_KEY}`;
 
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: geminiMessages,
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 1024,
-                }
+                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
             })
         });
 
@@ -90,36 +99,63 @@ Use this context to provide relevant, specific help.`;
             const error = await response.json();
             const message = error.error?.message || `API Error: ${response.status}`;
 
-            // If we hit a quota on primary, try fallback once
-            if (response.status === 429 && currentModel === PRIMARY_MODEL) {
+            if (response.status === 429 && modelId === PRIMARY_MODEL) {
                 console.warn('Primary model quota exceeded, trying fallback...');
-                return sendMessage(messages, codeContext, FALLBACK_MODEL);
+                return sendGeminiRequest(messages, systemInstruction, FALLBACK_MODEL);
             }
-
             throw new Error(message);
         }
 
         const data = await response.json();
-
         if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
             throw new Error('Invalid response from Gemini API');
         }
 
         return data.candidates[0].content.parts[0].text;
-
     } catch (error) {
-        console.error('AI Service Error:', error);
-
-        // Handle specific error cases
         if (error.message.includes('quota') || error.message.includes('429')) {
-            throw new Error('You exceeded your current AI quota. This happens on free keys after several quick messages. Please wait 1-2 minutes and try again.');
+            throw new Error('You exceeded your current AI quota. Please wait 1-2 minutes.');
+        }
+        throw error;
+    }
+};
+
+/**
+ * Handle Ollama Specific API Request
+ */
+const sendOllamaRequest = async (messages, systemInstruction, modelId) => {
+    try {
+        const ollamaMessages = [
+            { role: 'system', content: systemInstruction },
+            ...messages
+        ];
+
+        const response = await fetch(`${OLLAMA_BASE_URL}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: modelId,
+                messages: ollamaMessages,
+                stream: false,
+                options: { temperature: 0.7 }
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error(`Ollama Error 404: Model "${modelId}" not found. Please run "ollama pull ${modelId}" in your terminal.`);
+            }
+            throw new Error(`Ollama Error: ${response.status}. Is Ollama running?`);
         }
 
-        if (error.message.includes('API key') || error.message.includes('401')) {
-            throw new Error('AI service not configured correctly. Please check your VITE_GEMINI_API_KEY in the .env file.');
+        const data = await response.json();
+        return data.message.content;
+    } catch (error) {
+        console.error('Ollama Service Error:', error);
+        if (error.message.includes('Failed to fetch')) {
+            throw new Error('Could not connect to Ollama. Please ensure Ollama is running at http://localhost:11434');
         }
-
-        throw new Error(`Failed to get AI response: ${error.message}`);
+        throw new Error(`Ollama request failed: ${error.message}`);
     }
 };
 
