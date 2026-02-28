@@ -10,6 +10,8 @@ const OLLAMA_BASE_URL = 'http://localhost:11434/api';
 const PRIMARY_MODEL = 'gemma3:1b';
 const FALLBACK_MODEL = 'gemma3:1b';
 
+import { retrieveContext } from './ragService';
+
 /**
  * List of available models for the user to choose from
  */
@@ -37,9 +39,21 @@ export const sendMessage = async (messages, codeContext = null, modelOverride = 
 You help users learn programming by answering questions, explaining code, debugging issues, and providing guidance.
 Be concise, friendly, and educational. Focus on helping users understand concepts rather than just giving answers.`;
 
+    // RAG: Retrieve relevant context from knowledge base (Scenarios, Wikipedia, Project)
+    const userQuery = messages[messages.length - 1]?.content || "";
+    if (userQuery) {
+        try {
+            const ragContext = await retrieveContext(userQuery);
+            if (ragContext) {
+                systemInstruction += ragContext;
+            }
+        } catch (error) {
+            console.error("RAG Error:", error);
+        }
+    }
+
     if (codeContext) {
-        systemInstruction += `\n\nCurrent Coding Context:
-- Active File: ${codeContext.activeFile}
+        systemInstruction += `\n\n- Active File: ${codeContext.activeFile}
 - Scenario: ${codeContext.scenario || 'General coding practice'}
 - Current Code:
 \`\`\`javascript

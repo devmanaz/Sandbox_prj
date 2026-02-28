@@ -8,14 +8,17 @@ import {
     Save,
     Play,
     FileText,
-    FileJson,
     FileCode,
     CheckCircle2,
     AlertCircle,
-    MessageCircle
+    MessageCircle,
+    Container,
+    Wifi,
+    WifiOff
 } from 'lucide-react';
 import AIChatAssistant from '../components/AIChatAssistant';
 import { scenarios } from '../data/scenarios';
+import { executeCode, isSandboxAvailable } from '../services/executionService';
 
 const Ide = () => {
     const { scenarioId } = useParams();
@@ -28,6 +31,12 @@ const Ide = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [testsPassed, setTestsPassed] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [sandboxOnline, setSandboxOnline] = useState(null); // null = checking
+
+    // Check sandbox API availability on mount
+    useEffect(() => {
+        isSandboxAvailable().then(online => setSandboxOnline(online));
+    }, []);
 
     // Sync state when scenarioId changes
     useEffect(() => {
@@ -56,23 +65,47 @@ const Ide = () => {
         monaco.editor.setTheme('custom-dark');
     };
 
-    const handleRunTests = () => {
+    const handleRunTests = async () => {
         setIsRunning(true);
-        setOutput('Initializing scenario tests...');
+        setTestsPassed(false);
+        setOutput('⏳ Sending code to Docker sandbox...');
 
-        setTimeout(() => {
-            // Find main logic file (usually .js)
-            const mainFileKey = Object.keys(files).find(f => f.endsWith('.js')) || Object.keys(files)[0];
-            const code = files[mainFileKey].content;
+        // Find main logic file (usually .js)
+        const mainFileKey = Object.keys(files).find(f => f.endsWith('.js')) || Object.keys(files)[0];
+        const code = files[mainFileKey].content;
 
-            if (scenario.testCheck(code)) {
-                setOutput(`🚀 Scenario Tests Passed!\n\n✔ Logic: Correct\n✔ Expected Patterns: Found\n✔ Stability: Verified\n\nAll tests passed successfully! ✨`);
-                setTestsPassed(true);
-            } else {
-                setOutput(`❌ Scenario Tests Failed\n\n✖ Logic: Error\n  Expected solution pattern not found.\n\n💡 Hint: ${scenario.constraints[0]}`);
+        const result = await executeCode(code, scenario.testCheck);
+
+        // Re-check sandbox status after execution
+        isSandboxAvailable().then(online => setSandboxOnline(online));
+
+        let outputText = '';
+
+        if (result.timedOut) {
+            outputText = `⏱️  Execution Timed Out (10s limit exceeded)\n\nYour code ran for too long. Check for infinite loops.`;
+        } else if (result.stderr && !result.stdout) {
+            outputText = `❌ Runtime Error\n\n${result.stderr}`;
+        } else {
+            if (result.stdout) {
+                outputText += `📤 Output:\n${result.stdout}`;
             }
-            setIsRunning(false);
-        }, 1500);
+            if (result.stderr) {
+                outputText += `\n⚠️  Warnings / Errors:\n${result.stderr}`;
+            }
+            if (!result.stdout && !result.stderr) {
+                outputText = '(No output produced)';
+            }
+        }
+
+        if (result.passed) {
+            outputText += `\n\n✅ Scenario Tests Passed!\n✔ Logic: Correct\n✔ Expected Patterns: Found\n✔ Stability: Verified\n\nAll tests passed successfully! ✨`;
+            setTestsPassed(true);
+        } else if (!result.timedOut && result.exitCode === 0) {
+            outputText += `\n\n❌ Scenario Tests Failed\n  Expected solution pattern not found.\n\n💡 Hint: ${scenario.constraints[0]}`;
+        }
+
+        setOutput(outputText);
+        setIsRunning(false);
     };
 
     const handleSubmit = () => {
@@ -123,6 +156,19 @@ const Ide = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Sandbox Status Indicator */}
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${sandboxOnline === null
+                            ? 'text-slate-500 border-white/10'
+                            : sandboxOnline
+                                ? 'text-green-400 border-green-500/30 bg-green-500/5'
+                                : 'text-red-400 border-red-500/30 bg-red-500/5'
+                        }`}>
+                        {sandboxOnline === null
+                            ? <><Container size={12} /> Checking</>
+                            : sandboxOnline
+                                ? <><Wifi size={12} /> Sandbox Live</>
+                                : <><WifiOff size={12} /> API Offline</>}
+                    </div>
                     <button
                         className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white glass rounded-xl transition-all text-xs font-black uppercase tracking-widest"
                         onClick={() => setFiles(scenario.files)}
