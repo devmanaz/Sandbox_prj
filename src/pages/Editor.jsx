@@ -72,9 +72,8 @@ const Ide = () => {
 
         // Find main logic file (usually .js)
         const mainFileKey = Object.keys(files).find(f => f.endsWith('.js')) || Object.keys(files)[0];
-        const code = files[mainFileKey].content;
 
-        const result = await executeCode(code, scenario.testCheck);
+        const result = await executeCode(files, mainFileKey, scenario.testCheck);
 
         // Re-check sandbox status after execution
         isSandboxAvailable().then(online => setSandboxOnline(online));
@@ -158,10 +157,10 @@ const Ide = () => {
                 <div className="flex items-center gap-4">
                     {/* Sandbox Status Indicator */}
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${sandboxOnline === null
-                            ? 'text-slate-500 border-white/10'
-                            : sandboxOnline
-                                ? 'text-green-400 border-green-500/30 bg-green-500/5'
-                                : 'text-red-400 border-red-500/30 bg-red-500/5'
+                        ? 'text-slate-500 border-white/10'
+                        : sandboxOnline
+                            ? 'text-green-400 border-green-500/30 bg-green-500/5'
+                            : 'text-red-400 border-red-500/30 bg-red-500/5'
                         }`}>
                         {sandboxOnline === null
                             ? <><Container size={12} /> Checking</>

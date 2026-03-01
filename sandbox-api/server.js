@@ -35,27 +35,33 @@ app.get('/health', (_req, res) => {
  *                           Evaluated server-side against the submitted code string.
  */
 app.post('/execute', async (req, res) => {
-    const { code, testCheck } = req.body;
+    const { code, files, entryPoint, testCheck } = req.body;
 
-    if (typeof code !== 'string' || code.trim().length === 0) {
-        return res.status(400).json({ error: 'No code provided.' });
+    // Support both single "code" string (legacy) and "files" object
+    let executionFiles = files;
+    let executionEntryPoint = entryPoint || 'index.js';
+
+    if (!executionFiles && typeof code === 'string') {
+        executionFiles = { 'index.js': { content: code } };
+        executionEntryPoint = 'index.js';
     }
 
-    // Hard cap on code size (32 KB)
-    if (code.length > 32_768) {
-        return res.status(400).json({ error: 'Code exceeds maximum allowed size (32 KB).' });
+    if (!executionFiles || typeof executionFiles !== 'object' || Object.keys(executionFiles).length === 0) {
+        return res.status(400).json({ error: 'No code or files provided.' });
     }
 
     try {
-        const result = await executeCode(code);
+        const result = await executeCode(executionFiles, executionEntryPoint);
 
         // Determine if the scenario's testCheck passes
+        // We evaluate against the entry point file's code for legacy testCheck compatibility
+        const mainCode = executionFiles[executionEntryPoint]?.content || '';
         let passed = false;
         if (typeof testCheck === 'string' && testCheck.trim()) {
             try {
                 // eslint-disable-next-line no-new-func
                 const checkFn = new Function('code', testCheck);
-                passed = !!checkFn(code);
+                passed = !!checkFn(mainCode);
             } catch (e) {
                 console.warn('testCheck evaluation error:', e.message);
             }

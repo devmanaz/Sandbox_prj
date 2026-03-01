@@ -8,20 +8,19 @@ const SANDBOX_API_URL = import.meta.env.VITE_SANDBOX_API_URL || 'http://localhos
 /**
  * Execute JavaScript code in a sandboxed Docker container.
  *
- * @param {string} code         - The JavaScript source code to run
+ * @param {Object} files        - Object of files { "name.js": { content: "..." } }
+ * @param {string} entryPoint   - The main file to run
  * @param {Function} testCheck  - The scenario's testCheck function (to evaluate pass/fail)
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number, timedOut: boolean, passed: boolean}>}
  */
-export const executeCode = async (code, testCheck = null) => {
+export const executeCode = async (files, entryPoint = 'index.js', testCheck = null) => {
     // Serialize the testCheck function body so the API can evaluate it server-side
     let testCheckBody = '';
     if (typeof testCheck === 'function') {
-        // Extract just the function body: "return code.includes(...)"
         const fnStr = testCheck.toString();
         const bodyMatch = fnStr.match(/=>\s*([\s\S]+)$/);
         if (bodyMatch) {
             const body = bodyMatch[1].trim();
-            // If the body is a block { ... }, unwrap it; otherwise wrap in return
             testCheckBody = body.startsWith('{')
                 ? body.slice(1, -1).trim()
                 : `return (${body});`;
@@ -32,7 +31,11 @@ export const executeCode = async (code, testCheck = null) => {
         const response = await fetch(`${SANDBOX_API_URL}/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, testCheck: testCheckBody }),
+            body: JSON.stringify({
+                files,
+                entryPoint,
+                testCheck: testCheckBody
+            }),
             signal: AbortSignal.timeout(30_000), // 30-second fetch timeout
         });
 

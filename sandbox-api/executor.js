@@ -22,35 +22,54 @@ const TIMEOUT_MS = 10_000; // 10 seconds
 
 /**
  * executeCode
- * @param {string} code - JavaScript source code to run
+ * @param {Object} files - Object where keys are filenames and values have 'content'
+ * @param {string} entryPoint - The main file to execute (e.g., 'main.js')
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number, timedOut: boolean}>}
  */
-async function executeCode(code) {
-    // Write code to a unique temp file so we can bind-mount it read-only
-    const tmpDir = os.tmpdir();
-    const fileName = `sandbox_${crypto.randomBytes(8).toString('hex')}.js`;
-    const filePath = path.join(tmpDir, fileName);
+async function executeCode(files, entryPoint = 'index.js') {
+    // 1. Create a unique temp directory for this execution run
+    const baseTmpDir = os.tmpdir();
+    const runDir = fs.mkdtempSync(path.join(baseTmpDir, 'sandbox-run-'));
 
-    fs.writeFileSync(filePath, code, 'utf-8');
+    // 2. Write all provided files to the runDir
+    try {
+        for (const [filename, fileObj] of Object.entries(files)) {
+            const filePath = path.join(runDir, filename);
+            // Ensure subdirectories exist if needed (though scenarios are flat for now)
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(filePath, fileObj.content || '', 'utf-8');
+        }
+    } catch (err) {
+        return {
+            stdout: '',
+            stderr: `System error preparing sandbox files: ${err.message}`,
+            exitCode: 1,
+            timedOut: false
+        };
+    }
 
     return new Promise((resolve) => {
         let stdout = '';
         let stderr = '';
         let timedOut = false;
 
-        // Build docker run args
+        // 3. Build docker run args
+        // We mount the entire runDir to /sandbox in the container
         const dockerArgs = [
             'run',
-            '--rm',                           // auto-remove container
-            '--network', 'none',              // no internet
-            '--memory', '64m',               // RAM cap
-            '--memory-swap', '64m',          // disable swap
-            '--cpus', '0.5',                 // CPU cap
-            '--read-only',                   // read-only FS
-            '--tmpfs', '/tmp:size=8m',       // allow small /tmp writes
-            '-v', `${filePath}:/sandbox/code.js:ro`, // mount code
+            '--rm',
+            '--network', 'none',
+            '--memory', '64m',
+            '--memory-swap', '64m',
+            '--cpus', '0.5',
+            '--read-only',
+            '--tmpfs', '/tmp:size=8m',
+            '-v', `${runDir}:/sandbox:ro`, // mount the whole directory read-only
             RUNNER_IMAGE,
-            'node', '/sandbox/code.js'
+            'node', `/sandbox/${entryPoint}`
         ];
 
         const proc = spawn('docker', dockerArgs);
@@ -71,11 +90,13 @@ async function executeCode(code) {
 
         proc.on('close', (code) => {
             clearTimeout(timer);
-            // Cleanup temp file
-            try { fs.unlinkSync(filePath); } catch (_) { }
+            // 4. Cleanup the entire temp directory
+            try {
+                fs.rmSync(runDir, { recursive: true, force: true });
+            } catch (_) { }
 
             resolve({
-                stdout: stdout.slice(0, 8192),   // cap output at 8KB
+                stdout: stdout.slice(0, 8192),
                 stderr: stderr.slice(0, 4096),
                 exitCode: code ?? 1,
                 timedOut,
@@ -84,7 +105,7 @@ async function executeCode(code) {
 
         proc.on('error', (err) => {
             clearTimeout(timer);
-            try { fs.unlinkSync(filePath); } catch (_) { }
+            try { fs.rmSync(runDir, { recursive: true, force: true }); } catch (_) { }
             resolve({
                 stdout: '',
                 stderr: `Failed to spawn Docker: ${err.message}\nMake sure Docker is running and the "sandbox-runner" image is built.`,
