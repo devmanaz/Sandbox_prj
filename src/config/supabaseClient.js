@@ -8,7 +8,10 @@ const isConfigValid =
     supabaseUrl &&
     supabaseAnonKey &&
     supabaseUrl !== 'your_supabase_project_url' &&
-    supabaseAnonKey !== 'your_supabase_anon_key';
+    supabaseAnonKey !== 'your_supabase_anon_key' &&
+    !supabaseAnonKey.toLowerCase().includes('mock') &&
+    !supabaseAnonKey.toLowerCase().includes('placeholder') &&
+    !supabaseAnonKey.startsWith('sb_publishable_');
 
 if (!isConfigValid) {
     console.warn('Supabase credentials are missing or placeholder. Authentication features will be disabled.');

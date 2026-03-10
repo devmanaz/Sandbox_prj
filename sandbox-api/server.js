@@ -9,6 +9,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const os = require('os');
 const { executeCode } = require('./executor');
 
 const app = express();
@@ -51,17 +52,23 @@ app.post('/execute', async (req, res) => {
     }
 
     try {
+        const fs = require('fs');
+        console.log('--- DEBUG EXECUTION ---');
+        console.log('Files:', Object.keys(executionFiles));
+        console.log('EntryPoint:', executionEntryPoint);
+        try { console.log('Tmp Dir Contents:', fs.readdirSync(process.platform === 'win32' ? os.tmpdir() : '/tmp')); } catch (e) { console.log('Tmp Dir: (not accessible)'); }
+
         const result = await executeCode(executionFiles, executionEntryPoint);
 
         // Determine if the scenario's testCheck passes
-        // We evaluate against the entry point file's code for legacy testCheck compatibility
+        // We evaluate against the entry point file's code AND the execution results
         const mainCode = executionFiles[executionEntryPoint]?.content || '';
         let passed = false;
         if (typeof testCheck === 'string' && testCheck.trim()) {
             try {
                 // eslint-disable-next-line no-new-func
-                const checkFn = new Function('code', testCheck);
-                passed = !!checkFn(mainCode);
+                const checkFn = new Function('code', 'stdout', 'stderr', 'files', testCheck);
+                passed = !!checkFn(mainCode, result.stdout, result.stderr, executionFiles);
             } catch (e) {
                 console.warn('testCheck evaluation error:', e.message);
             }

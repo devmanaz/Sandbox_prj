@@ -119,6 +119,24 @@ const SignUp = () => {
                     <p className="text-slate-400 mt-2 text-sm uppercase tracking-widest font-semibold">Join the scenario</p>
                 </div>
 
+                {!useAuth().isConfigured && (
+                    <div className="mb-6 p-4 glass rounded-xl flex flex-col gap-2 border-blue-500/30">
+                        <div className="flex items-center gap-2 text-blue-400 font-semibold">
+                            <AlertCircle size={20} />
+                            <span>Development Mode</span>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                            Supabase is not configured yet. Authentication is disabled, but you can explore!
+                        </p>
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="mt-2 text-xs font-bold text-white bg-blue-600/20 hover:bg-blue-600/40 p-2 rounded-lg transition-all flex items-center justify-center gap-1 border border-blue-500/30"
+                        >
+                            Skip to Dashboard →
+                        </button>
+                    </div>
+                )}
+
                 {error && (
                     <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400">
                         <AlertCircle size={20} />
@@ -136,7 +154,7 @@ const SignUp = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
-                            Password <span className="text-accent-magenta">*</span>
+                            Full Name <span className="text-accent-magenta">*</span>
                         </label>
                         <input
                             type="text"

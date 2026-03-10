@@ -10,10 +10,13 @@ services:
     volumes:
       # Mount Docker socket so the API can spawn sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
-      # Mount host tmp so we can pass code files into sibling containers
-      - /tmp:/tmp
+      # Use a named volume for sharing code files with sibling containers
+      - sandbox_tmp:/app/tmp
     environment:
       - NODE_ENV=production
+      - SANDBOX_VOLUME_NAME=sandbox_prj_sandbox_tmp
+      # Additional logging
+      - DEBUG=true
     restart: unless-stopped
 
   # ── Runner image build helper ─────────────────────────────────────────────
@@ -28,3 +31,7 @@ services:
     command: ["echo", "sandbox-runner image ready"]
     profiles:
       - build               # only runs with: docker compose --profile build up
+
+volumes:
+  sandbox_tmp:
+

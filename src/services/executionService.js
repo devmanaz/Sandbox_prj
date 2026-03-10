@@ -25,6 +25,8 @@ export const executeCode = async (files, entryPoint = 'index.js', testCheck = nu
                 ? body.slice(1, -1).trim()
                 : `return (${body});`;
         }
+    } else if (typeof testCheck === 'string') {
+        testCheckBody = testCheck;
     }
 
     try {

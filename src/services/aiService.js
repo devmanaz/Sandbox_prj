@@ -1,202 +1,107 @@
 /**
- * AI Service for Google Gemini Integration
- * Handles all AI-related API calls for the chat assistant
+ * AI Service — Google Gemini Integration via @google/generative-ai SDK
  */
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const OLLAMA_BASE_URL = 'http://localhost:11434/api';
+const MODEL_ID = 'gemini-2.0-flash';
 
-const PRIMARY_MODEL = 'gemma3:1b';
-const FALLBACK_MODEL = 'gemma3:1b';
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-import { retrieveContext } from './ragService';
-
-/**
- * List of available models for the user to choose from
- */
 export const AVAILABLE_MODELS = [
-    { id: 'gemma3:1b', name: 'Gemma 3 1B (Local)', description: 'Fast local Google model', provider: 'ollama' },
-    { id: 'llama3', name: 'Llama 3 (Local)', description: 'Powerful local model (needs pull)', provider: 'ollama' },
-    { id: 'mistral', name: 'Mistral (Local)', description: 'Balanced performance (needs pull)', provider: 'ollama' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast cloud-based AI', provider: 'gemini' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Maximum intelligence for complex tasks', provider: 'gemini' }
+    {
+        id: 'gemini-2.0-flash',
+        name: 'Gemini Flash 2.0',
+        description: 'Fast, capable AI for coding help',
+        provider: 'gemini'
+    }
 ];
 
 /**
- * Send a message to Gemini and get a response
- * @param {Array} messages - Array of message objects {role: 'user'|'assistant', content: string}
- * @param {Object} codeContext - Current code context {activeFile, code, scenario}
- * @param {string} modelOverride - Optional model to use
- * @returns {Promise<string>} - AI response text
+ * Serialize codeContext (object or string) to a readable string for the prompt.
  */
-export const sendMessage = async (messages, codeContext = null, modelOverride = null) => {
-    let currentModelId = modelOverride || PRIMARY_MODEL;
-    const modelConfig = AVAILABLE_MODELS.find(m => m.id === currentModelId) || AVAILABLE_MODELS[0];
-
-    // Build system instruction with code context
-    let systemInstruction = `You are a helpful AI coding assistant integrated into a coding sandbox platform. 
-You help users learn programming by answering questions, explaining code, debugging issues, and providing guidance.
-Be concise, friendly, and educational. Focus on helping users understand concepts rather than just giving answers.`;
-
-    // RAG: Retrieve relevant context from knowledge base (Scenarios, Wikipedia, Project)
-    const userQuery = messages[messages.length - 1]?.content || "";
-    if (userQuery) {
-        try {
-            const ragContext = await retrieveContext(userQuery);
-            if (ragContext) {
-                systemInstruction += ragContext;
-            }
-        } catch (error) {
-            console.error("RAG Error:", error);
-        }
-    }
-
-    if (codeContext) {
-        systemInstruction += `\n\n- Active File: ${codeContext.activeFile}
-- Scenario: ${codeContext.scenario || 'General coding practice'}
-- Current Code:
+function serializeContext(codeContext) {
+    if (!codeContext) return '';
+    if (typeof codeContext === 'string') return codeContext;
+    return `Active File: ${codeContext.activeFile || 'unknown'}
+Scenario: ${codeContext.scenario || 'General coding'}
+Current Code:
 \`\`\`javascript
-${codeContext.code}
-\`\`\`
-
-Use this context to provide relevant, specific help.`;
-    }
-
-    if (modelConfig.provider === 'ollama') {
-        return sendOllamaRequest(messages, systemInstruction, modelConfig.id);
-    } else {
-        return sendGeminiRequest(messages, systemInstruction, modelConfig.id);
-    }
-};
+${codeContext.code || ''}
+\`\`\``;
+}
 
 /**
- * Handle Gemini Specific API Request
+ * Send a message to Gemini and get a response.
+ * @param {Array} messages - [{role: 'user'|'assistant', content: string}]
+ * @param {Object|string|null} codeContext - Current code context
+ * @param {string} [modelOverride] - Optional, ignored (always uses Gemini Flash)
+ * @returns {Promise<string>}
  */
-const sendGeminiRequest = async (messages, systemInstruction, modelId) => {
-    try {
-        let firstUserMessage = true;
-        const geminiMessages = messages.map(msg => {
-            let role = msg.role === 'assistant' ? 'model' : 'user';
-            let content = msg.content;
-
-            if (firstUserMessage && role === 'user') {
-                content = `${systemInstruction}\n\n${content}`;
-                firstUserMessage = false;
-            }
-
-            return {
-                role: role,
-                parts: [{ text: content }]
-            };
-        });
-
-        if (firstUserMessage) {
-            geminiMessages.unshift({
-                role: 'user',
-                parts: [{ text: systemInstruction }]
-            });
-        }
-
-        const API_URL = `${GEMINI_BASE_URL}/${modelId}:generateContent?key=${GEMINI_API_KEY}`;
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: geminiMessages,
-                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            const message = error.error?.message || `API Error: ${response.status}`;
-
-            if (response.status === 429 && modelId === PRIMARY_MODEL) {
-                console.warn('Primary model quota exceeded, trying fallback...');
-                return sendGeminiRequest(messages, systemInstruction, FALLBACK_MODEL);
-            }
-            throw new Error(message);
-        }
-
-        const data = await response.json();
-        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-            throw new Error('Invalid response from Gemini API');
-        }
-
-        return data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        if (error.message.includes('quota') || error.message.includes('429')) {
-            throw new Error('You exceeded your current AI quota. Please wait 1-2 minutes.');
-        }
-        throw error;
+export async function sendMessage(messages, codeContext = null, modelOverride = null) {
+    if (!GEMINI_API_KEY) {
+        throw new Error('No Gemini API key found. Add VITE_GEMINI_API_KEY to your .env file.');
     }
-};
+
+    const model = genAI.getGenerativeModel({ model: MODEL_ID });
+
+    const contextStr = serializeContext(codeContext);
+
+    const conversation = messages
+        .map(m => `${m.role === 'assistant' ? 'assistant' : 'user'}: ${m.content}`)
+        .join('\n');
+
+    const prompt = `You are a helpful AI coding assistant inside a coding sandbox platform.
+Help users learn by explaining concepts and debugging code.
+Be concise, educational, and friendly. DO NOT give the full solution directly.
+
+${contextStr ? `Code Context:\n${contextStr}\n` : ''}
+Conversation:
+${conversation}
+
+assistant:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+}
 
 /**
- * Handle Ollama Specific API Request
+ * Get a quick debugging hint for the current scenario.
+ * @param {Object|string|null} codeContext
+ * @param {string} [modelOverride] - Ignored, kept for API compatibility
+ * @returns {Promise<string>}
  */
-const sendOllamaRequest = async (messages, systemInstruction, modelId) => {
-    try {
-        const ollamaMessages = [
-            { role: 'system', content: systemInstruction },
-            ...messages
-        ];
-
-        const response = await fetch(`${OLLAMA_BASE_URL}/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: modelId,
-                messages: ollamaMessages,
-                stream: false,
-                options: { temperature: 0.7 }
-            })
-        });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error(`Ollama Error 404: Model "${modelId}" not found. Please run "ollama pull ${modelId}" in your terminal.`);
-            }
-            throw new Error(`Ollama Error: ${response.status}. Is Ollama running?`);
-        }
-
-        const data = await response.json();
-        return data.message.content;
-    } catch (error) {
-        console.error('Ollama Service Error:', error);
-        if (error.message.includes('Failed to fetch')) {
-            throw new Error('Could not connect to Ollama. Please ensure Ollama is running at http://localhost:11434');
-        }
-        throw new Error(`Ollama request failed: ${error.message}`);
+export async function getHint(codeContext, modelOverride = null) {
+    if (!GEMINI_API_KEY) {
+        throw new Error('No Gemini API key found. Add VITE_GEMINI_API_KEY to your .env file.');
     }
-};
+
+    const model = genAI.getGenerativeModel({ model: MODEL_ID });
+
+    const contextStr = serializeContext(codeContext);
+
+    const prompt = `You are a coding assistant. Give a short, helpful debugging hint for this code.
+Do NOT give the full solution — only guide the user toward the fix.
+
+${contextStr || 'No code context provided.'}
+
+Hint:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+}
 
 /**
- * Get a quick hint for the current scenario
- * @param {Object} codeContext - Current code context
- * @returns {Promise<string>} - AI hint
+ * Explain a piece of code.
+ * @param {string} code
+ * @returns {Promise<string>}
  */
-export const getHint = async (codeContext, modelOverride = null) => {
-    const messages = [{
-        role: 'user',
-        content: 'Can you give me a hint about what I should focus on to solve this scenario? Don\'t give me the complete solution, just point me in the right direction.'
-    }];
-
-    return sendMessage(messages, codeContext, modelOverride);
-};
-
-/**
- * Explain a piece of code
- * @param {string} code - Code to explain
- * @returns {Promise<string>} - Explanation
- */
-export const explainCode = async (code) => {
-    const messages = [{
+export async function explainCode(code) {
+    return sendMessage([{
         role: 'user',
         content: `Please explain this code:\n\`\`\`javascript\n${code}\n\`\`\``
-    }];
-
-    return sendMessage(messages);
-};
+    }]);
+}
