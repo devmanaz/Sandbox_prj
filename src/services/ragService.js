@@ -75,7 +75,7 @@ const getProjectContext = () => {
 Project Overview: Sandbox_prj
 Tech Stack: React, Vite, Tailwind CSS, Lucide Icons, Monaco Editor.
 Key Services:
-- aiService.js: Handles LLM requests (Gemini/Ollama).
+- aiService.js: Handles LLM requests (Groq/LPU).
 - ragService.js: Enhanced RAG with local vector search and Wikipedia fallback.
 - scenarios.js: Defines interactive coding challenges.
 Architecture: Frontend-first coding sandbox with local AI capabilities.

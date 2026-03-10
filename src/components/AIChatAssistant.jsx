@@ -70,7 +70,7 @@ const AIChatAssistant = ({ isOpen, onClose, codeContext }) => {
                 ...newMessages,
                 {
                     role: 'assistant',
-                    content: `⚠️ Error: ${error.message}\n\nPlease make sure you've added your Gemini API key to the .env file.`
+                    content: `⚠️ Error: ${error.message}\n\nPlease make sure you've added your Groq API key to the .env file.`
                 }
             ]);
         } finally {

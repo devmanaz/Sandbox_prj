@@ -1,20 +1,23 @@
 /**
- * AI Service — Google Gemini Integration via @google/generative-ai SDK
+ * AI Service — Groq Integration via groq-sdk
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const MODEL_ID = 'gemini-2.0-flash';
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
+const MODEL_ID = 'openai/gpt-oss-20b';
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const groq = new Groq({
+    apiKey: GROQ_API_KEY,
+    dangerouslyAllowBrowser: true // Required for client-side usage in Vite
+});
 
 export const AVAILABLE_MODELS = [
     {
-        id: 'gemini-2.0-flash',
-        name: 'Gemini Flash 2.0',
-        description: 'Fast, capable AI for coding help',
-        provider: 'gemini'
+        id: 'openai/gpt-oss-20b',
+        name: 'GPT OSS 20B',
+        description: 'Blazing fast inference via Groq LPU',
+        provider: 'groq'
     }
 ];
 
@@ -33,65 +36,63 @@ ${codeContext.code || ''}
 }
 
 /**
- * Send a message to Gemini and get a response.
+ * Send a message to Groq and get a response.
  * @param {Array} messages - [{role: 'user'|'assistant', content: string}]
  * @param {Object|string|null} codeContext - Current code context
- * @param {string} [modelOverride] - Optional, ignored (always uses Gemini Flash)
+ * @param {string} [modelOverride] - Optional
  * @returns {Promise<string>}
  */
 export async function sendMessage(messages, codeContext = null, modelOverride = null) {
-    if (!GEMINI_API_KEY) {
-        throw new Error('No Gemini API key found. Add VITE_GEMINI_API_KEY to your .env file.');
+    if (!GROQ_API_KEY) {
+        throw new Error('No Groq API key found. Add VITE_GROQ_API_KEY to your .env file.');
     }
-
-    const model = genAI.getGenerativeModel({ model: MODEL_ID });
 
     const contextStr = serializeContext(codeContext);
 
-    const conversation = messages
-        .map(m => `${m.role === 'assistant' ? 'assistant' : 'user'}: ${m.content}`)
-        .join('\n');
-
-    const prompt = `You are a helpful AI coding assistant inside a coding sandbox platform.
+    const systemPrompt = `You are a helpful AI coding assistant inside a coding sandbox platform.
 Help users learn by explaining concepts and debugging code.
 Be concise, educational, and friendly. DO NOT give the full solution directly.
 
-${contextStr ? `Code Context:\n${contextStr}\n` : ''}
-Conversation:
-${conversation}
+${contextStr ? `Code Context:\n${contextStr}\n` : ''}`;
 
-assistant:`;
+    const completion = await groq.chat.completions.create({
+        model: modelOverride || MODEL_ID,
+        messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+        ],
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    return completion.choices[0]?.message?.content || "No response from AI.";
 }
 
 /**
  * Get a quick debugging hint for the current scenario.
  * @param {Object|string|null} codeContext
- * @param {string} [modelOverride] - Ignored, kept for API compatibility
+ * @param {string} [modelOverride] - Optional
  * @returns {Promise<string>}
  */
 export async function getHint(codeContext, modelOverride = null) {
-    if (!GEMINI_API_KEY) {
-        throw new Error('No Gemini API key found. Add VITE_GEMINI_API_KEY to your .env file.');
+    if (!GROQ_API_KEY) {
+        throw new Error('No Groq API key found. Add VITE_GROQ_API_KEY to your .env file.');
     }
-
-    const model = genAI.getGenerativeModel({ model: MODEL_ID });
 
     const contextStr = serializeContext(codeContext);
 
-    const prompt = `You are a coding assistant. Give a short, helpful debugging hint for this code.
+    const systemPrompt = `You are a coding assistant. Give a short, helpful debugging hint for this code.
 Do NOT give the full solution — only guide the user toward the fix.
 
-${contextStr || 'No code context provided.'}
+${contextStr || 'No code context provided.'}`;
 
-Hint:`;
+    const completion = await groq.chat.completions.create({
+        model: modelOverride || MODEL_ID,
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: "Give me a hint" }
+        ],
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    return completion.choices[0]?.message?.content || "No hint available.";
 }
 
 /**
