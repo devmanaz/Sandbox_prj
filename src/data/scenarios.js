@@ -1,6 +1,7 @@
 export const scenarios = [
   {
     id: 'ecommerce-tax',
+    category: 'backend',
     title: 'E-Commerce Tax Engine',
     description: 'Fix the tax calculation logic in a multi-file shopping cart system. The current implementation only returns the subtotal.',
     difficulty: 'Medium',
@@ -59,6 +60,7 @@ console.log('RESULT_TOTAL:' + total);`
   },
   {
     id: 'auth-session',
+    category: 'backend',
     title: 'Secure Session Management',
     description: 'Build a session validation layer using separate logic and constant modules. Prevent unauthorized access for expired tokens.',
     difficulty: 'Hard',
@@ -104,6 +106,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'inventory-alerts',
+    category: 'backend',
     title: 'Intelligent Stock Alerts',
     description: 'Refactor the notification system to use a data-driven threshold model instead of hardcoded values.',
     difficulty: 'Easy',
@@ -130,6 +133,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'api-error-boundary',
+    category: 'backend',
     title: 'Graceful API Degrader',
     description: 'Implement a resilience layer that falls back to localized mock data when the primary API client fails.',
     difficulty: 'Hard',
@@ -151,6 +155,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'theme-orchestrator',
+    category: 'backend',
     title: 'Multi-Context Theme Manager',
     description: 'Coordinate system preferences and user overrides across a stylesheet and a logic controller.',
     difficulty: 'Medium',
@@ -172,6 +177,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'data-transformer-pro',
+    category: 'backend',
     title: 'Schema-Driven Transformer',
     description: 'Map raw external data into a validated internal schema using shared transformation rules.',
     difficulty: 'Medium',
@@ -193,6 +199,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'rbac-gatekeeper',
+    category: 'backend',
     title: 'Distributed RBAC Guard',
     description: 'Check nested permissions across a multi-role architecture to protect specific system actions.',
     difficulty: 'Hard',
@@ -214,6 +221,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'search-efficiency',
+    category: 'backend',
     title: 'Multi-File Debouncer',
     description: 'Implement a high-performance debouncer for search triggers that interacts with an external API module.',
     difficulty: 'Hard',
@@ -235,6 +243,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'finance-wizard',
+    category: 'backend',
     title: 'Compound Interest Studio',
     description: 'Build a financial calculation module that uses separate interest rate and compounding factor configurations.',
     difficulty: 'Medium',
@@ -256,6 +265,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'seo-slug-generator',
+    category: 'backend',
     title: 'SEO Slug Workflows',
     description: 'Cleanse and transform website titles into production-ready URLs using a regex-based cleansing module.',
     difficulty: 'Easy',
@@ -277,6 +287,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'inventory-processor',
+    category: 'backend',
     title: 'Order Status Workflow',
     description: 'Manage complex order state transitions across a dedicated processor and a status mapping file.',
     difficulty: 'Medium',
@@ -298,6 +309,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'file-utility-kit',
+    category: 'backend',
     title: 'Readable Size Formatter',
     description: 'Coordinate byte-to-string conversions using a unit-map file to support KB, MB, and GB precision.',
     difficulty: 'Medium',
@@ -319,6 +331,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'config-merger-v2',
+    category: 'backend',
     title: 'Recursive Config Union',
     description: 'Merge deep JSON configurations from multiple sources into a single unified application state.',
     difficulty: 'Hard',
@@ -340,6 +353,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'color-parser-studio',
+    category: 'backend',
     title: 'Hex to RGB Converter',
     description: 'Implement a parsing workflow that converts HEX strings into RGB objects using bitwise or string-slice logic.',
     difficulty: 'Medium',
@@ -361,6 +375,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'security-analyzer',
+    category: 'backend',
     title: 'Password Pulse Gauge',
     description: 'Create a security analyzer that scores passwords based on complex patterns defined in a shared policy file.',
     difficulty: 'Medium',
@@ -382,6 +397,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'data-dedupe-engine',
+    category: 'backend',
     title: 'Unique Entity Resolver',
     description: 'Deduplicate complex data lists based on a unique identifier key specified in a settings module.',
     difficulty: 'Medium',
@@ -403,6 +419,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'time-relative-pro',
+    category: 'backend',
     title: 'Social Media Timestamps',
     description: 'Convert timestamps into "ago" strings using a multi-threshold interval mapping system.',
     difficulty: 'Hard',
@@ -424,6 +441,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'form-validation-kit',
+    category: 'backend',
     title: 'Cross-Field Form Validator',
     description: 'Implement a validation engine that checks correlations between multiple fields (e.g., password and confirmation).',
     difficulty: 'Medium',
@@ -445,6 +463,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'url-query-builder',
+    category: 'backend',
     title: 'Dynamic URL Assembler',
     description: 'Construct complex URL strings with query parameters using a shared base configuration module.',
     difficulty: 'Easy',
@@ -466,6 +485,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'localization-manager',
+    category: 'backend',
     title: 'Multi-Language Store',
     description: 'Build a translation engine that switches between language bundles based on a locale code.',
     difficulty: 'Medium',
@@ -487,6 +507,7 @@ console.log('TEST_EXPIRED:' + isSessionActive(expiredSession));`
   },
   {
     id: 'payment-rounding-bug',
+    category: 'backend',
     title: 'Payment Precision Bug (Floating Point)',
     description: 'Debug a checkout system where fractional cents are lost during calculations, causing revenue leakage. The bug occurs when multiplying decimal values.',
     difficulty: 'Medium',
@@ -548,6 +569,7 @@ export function roundPrice(price) {
   },
   {
     id: 'database-connection-leak',
+    category: 'backend',
     title: 'Connection Pool Memory Leak',
     description: 'Debug a service that fails to close database connections properly. Connections pile up and exhaust the pool, causing "ECONNREFUSED" errors.',
     difficulty: 'Hard',
@@ -626,6 +648,7 @@ export function closeConnection(conn) {
   },
   {
     id: 'race-condition-counter',
+    category: 'backend',
     title: 'Race Condition in Async Counter',
     description: 'Debug an inventory system where concurrent requests increment the counter incorrectly. Multiple async operations read-modify-write without coordination.',
     difficulty: 'Hard',
@@ -702,6 +725,7 @@ import { INVENTORY } from './state.js';
   },
   {
     id: 'caching-invalidation-bug',
+    category: 'backend',
     title: 'Stale Cache Not Invalidated',
     description: 'Debug a user profile system where cached data never expires or updates. Users see outdated information even after changes.',
     difficulty: 'Medium',
@@ -766,6 +790,7 @@ export function clearCache(userId) {
   },
   {
     id: 'string-escaping-xss',
+    category: 'backend',
     title: 'XSS Vulnerability - Unescaped HTML',
     description: 'Debug a comment rendering system that injects malicious scripts. User input isn\'t sanitized before display.',
     difficulty: 'Hard',
@@ -823,6 +848,7 @@ export function renderCommentsSafe(comments) {
   },
   {
     id: 'event-listener-memory-leak',
+    category: 'backend',
     title: 'Event Listeners Not Cleaned Up',
     description: 'Debug a real-time chat widget where event listeners accumulate on every page load, consuming memory and firing multiple times.',
     difficulty: 'Hard',
@@ -902,6 +928,7 @@ export function getListenerCount() {
   },
   {
     id: 'null-pointer-chain',
+    category: 'backend',
     title: 'Null Pointer Exception - Unsafe Property Access',
     description: 'Debug an API response handler that crashes when optional fields are missing. Deep property access without null checks.',
     difficulty: 'Medium',
@@ -970,6 +997,7 @@ export function processUsers(responses) {
   },
   {
     id: 'sql-injection-danger',
+    category: 'backend',
     title: 'SQL Injection - Unsafe Query Building',
     description: 'Debug a user search feature vulnerable to SQL injection. String concatenation is used instead of parameterized queries.',
     difficulty: 'Hard',
@@ -1027,6 +1055,7 @@ export function findByEmailSafe(email) {
   },
   {
     id: 'off-by-one-pagination',
+    category: 'backend',
     title: 'Off-by-One Error in Pagination',
     description: 'Debug a data listing system where pagination boundaries are wrong. Page 2 shows duplicate or missing items.',
     difficulty: 'Medium',
@@ -1096,6 +1125,7 @@ export function validatePageNumber(page, total) {
   },
   {
     id: 'async-timing-bug',
+    category: 'backend',
     title: 'Async/Promise Timing Issue',
     description: 'Debug a multi-step workflow where data is used before the async operation completes. Wrong promise chaining or missing await.',
     difficulty: 'Hard',
@@ -1161,6 +1191,7 @@ export async function fetchUserPosts(userId) {
   },
   {
     id: 'case-sensitivity-bug',
+    category: 'backend',
     title: 'Case Sensitivity Bug - String Comparison',
     description: 'Debug a role-based access system where roles aren\'t compared case-sensitively. "Admin" and "admin" are treated as different.',
     difficulty: 'Easy',
@@ -1222,6 +1253,7 @@ export function validateRole(role) {
   },
   {
     id: 'type-coercion-surprise',
+    category: 'backend',
     title: 'Type Coercion Bug - Loose Equality',
     description: 'Debug a validator that accepts invalid input due to JavaScript\'s loose equality. "0" == 0 == false causes logic errors.',
     difficulty: 'Medium',
@@ -1282,6 +1314,7 @@ export function isValidStatus(status) {
   },
   {
     id: 'ecommerce-order-system',
+    category: 'backend',
     title: 'E-Commerce Order Processing System',
     description: 'Fix a multi-tier order processing pipeline with bugs in inventory, payment, and shipping coordination. The system processes orders but fails to update inventory correctly, duplicate charges occur, and order status is inconsistent.',
     difficulty: 'Hard',
@@ -1564,6 +1597,7 @@ import { paymentProcessor } from './payment.js';
   },
   {
     id: 'realtime-messaging-app',
+    category: 'backend',
     title: 'Real-Time Messaging Application',
     description: 'Debug a chat application with message ordering issues, missing messages, duplicate delivery, and user presence tracking bugs. Messages arrive out of order, some are lost, others duplicated.',
     difficulty: 'Hard',
@@ -1835,6 +1869,7 @@ import { roomManager } from './roomManager.js';
   },
   {
     id: 'user-auth-system',
+    category: 'backend',
     title: 'User Authentication & Authorization',
     description: 'Debug a complete auth system with token expiration bugs, privilege escalation vulnerabilities, session hijacking issues, and password reset token reuse problems.',
     difficulty: 'Hard',
@@ -2146,6 +2181,7 @@ import { passwordReset } from './passwordReset.js';
   },
   {
     id: 'conduit-article-feed',
+    category: 'backend',
     title: 'Conduit: Global Article Feed',
     description: 'Implement a high-performance data transformation layer for the Conduit (RealWorld) article feed. Map raw database records to the standardized API response structure.',
     difficulty: 'Hard',
@@ -2272,6 +2308,7 @@ if (result.articles[0] && result.articles[0].author) {
   // ─── FRONTEND SCENARIOS ───────────────────────────────────────────────────
   {
     id: 'css-flexbox-bug',
+    category: 'frontend',
     type: 'frontend',
     title: 'Broken Flex Layout',
     description: 'Three nav items should sit side-by-side in a horizontal row, but they are stacking vertically. Fix the CSS so the layout displays correctly.',
@@ -2347,6 +2384,7 @@ if (result.articles[0] && result.articles[0].author) {
   },
   {
     id: 'js-counter-bug',
+    category: 'frontend',
     type: 'frontend',
     title: 'Click Counter Bug',
     description: 'A counter button should increment the displayed number each time it is clicked. The counter is stuck at 0. Find and fix the two bugs.',
@@ -2413,6 +2451,7 @@ if (result.articles[0] && result.articles[0].author) {
   },
   {
     id: 'dom-color-bug',
+    category: 'frontend',
     type: 'frontend',
     title: 'Dynamic Color Picker',
     description: 'Clicking a color swatch should change the background of the box below it. Nothing happens. Fix the JavaScript typo.',
@@ -2491,6 +2530,7 @@ if (result.articles[0] && result.articles[0].author) {
   },
   {
     id: 'css-card-hover-bug',
+    category: 'frontend',
     type: 'frontend',
     title: 'Card Hover Effect Bug',
     description: 'Three product cards should lift and glow on hover. The hover animation is completely broken. Fix the two CSS bugs.',
@@ -2571,6 +2611,7 @@ if (result.articles[0] && result.articles[0].author) {
   },
   {
     id: 'js-todo-list-bug',
+    category: 'frontend',
     type: 'frontend',
     title: 'Todo List Builder Bug',
     description: 'A todo app should add new tasks when clicking "Add". Items are not appearing and the input is never cleared. Fix the three JavaScript bugs.',

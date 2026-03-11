@@ -68,6 +68,7 @@ const Dashboard = () => {
     const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(!user);
     const [completedProjects, setCompletedProjects] = useState([]);
+    const [filterCategory, setFilterCategory] = useState('ALL');
 
     useEffect(() => {
         // Load completed projects from localStorage
@@ -108,6 +109,10 @@ const Dashboard = () => {
     const totalProjects = scenarios.length;
     const submissionCount = completedProjects.length;
     const avgScore = totalProjects > 0 ? (submissionCount / totalProjects) * 100 : 0;
+
+    const filteredScenarios = scenarios.filter(scenario => 
+        filterCategory === 'ALL' ? true : scenario.category?.toUpperCase() === filterCategory
+    );
 
     return (
         <div className="relative min-h-screen bg-[#030303] overflow-hidden font-sans pb-20">
@@ -151,7 +156,7 @@ const Dashboard = () => {
             {!isConfigured && (
                 <div className="bg-purple-600 text-white px-10 py-2.5 flex items-center justify-center gap-4 text-xs font-black uppercase tracking-widest relative z-40">
                     <AlertCircle size={14} />
-                    <span>Supabase is not configured. Some features may be offline.</span>
+                    <span>Firebase is not configured. Some features may be offline.</span>
                     <Link to="/login" className="underline hover:text-purple-200">Connect Now</Link>
                 </div>
             )}
@@ -181,12 +186,35 @@ const Dashboard = () => {
 
                 {/* Available Projects Section */}
                 <div>
-                    <div className="flex items-center gap-4 mb-10">
+                    <div className="flex items-center gap-4 mb-6">
                         <h2 className="text-4xl font-bold text-white tracking-tight">Available Projects</h2>
                         <div className="h-px flex-grow bg-white/10"></div>
                     </div>
+
+                    {/* Filter Buttons */}
+                    <div className="flex items-center gap-4 mb-10 relative z-10">
+                        <button
+                            onClick={() => setFilterCategory('ALL')}
+                            className={`px-6 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all duration-300 ${filterCategory === 'ALL' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25' : 'glass text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setFilterCategory('FRONTEND')}
+                            className={`px-6 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all duration-300 ${filterCategory === 'FRONTEND' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25' : 'glass text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            Frontend
+                        </button>
+                        <button
+                            onClick={() => setFilterCategory('BACKEND')}
+                            className={`px-6 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all duration-300 ${filterCategory === 'BACKEND' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25' : 'glass text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            Backend
+                        </button>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {scenarios.map((scenario) => (
+                        {filteredScenarios.map((scenario) => (
                             <ProjectCard
                                 key={scenario.id}
                                 id={scenario.id}
