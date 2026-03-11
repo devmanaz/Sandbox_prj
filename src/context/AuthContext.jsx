@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../config/supabaseClient';
+import { auth, db, isConfigValid } from '../config/firebaseClient';
+import { 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut as firebaseSignOut,
+    onAuthStateChanged 
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 const AuthContext = createContext({});
 
@@ -16,101 +23,90 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!supabase) {
+        if (!isConfigValid || !auth) {
             setLoading(false);
             return;
         }
 
-        // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
             setLoading(false);
         });
 
-        // Listen for changes on auth state (logged in, signed out, etc.)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
+        return () => unsubscribe();
     }, []);
 
     // Sign up function
     const signUp = async (email, password, userData) => {
-        if (!supabase) {
-            return { data: null, error: { message: 'Supabase is not configured. Please check your .env file.' } };
+        if (!isConfigValid || !auth) {
+            return { data: null, error: { message: 'Firebase is not configured. Please check your .env file.' } };
         }
         try {
-            // Create auth user with email confirmation disabled for development
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    // Skip email confirmation to avoid rate limits during development
-                    emailRedirectTo: undefined,
-                }
-            });
-
-            if (authError) {
-                // Handle rate limit errors specifically
-                if (authError.message.includes('rate limit') || authError.message.includes('Email rate limit exceeded')) {
-                    throw new Error('Too many signup attempts. Please wait a few minutes and try again.');
-                }
-                throw authError;
+            // Check if username already exists
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('username', '==', userData.username));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                throw new Error('Username is already taken.');
             }
 
-            // Insert additional user data into public.users table
-            if (authData.user) {
-                const { error: profileError } = await supabase
-                    .from('users')
-                    .insert([
-                        {
-                            id: authData.user.id,
-                            email: email,
-                            username: userData.username,
-                            full_name: userData.full_name,
-                            phone_number: userData.phoneNumber,
-                            date_of_birth: userData.dateOfBirth,
-                            user_type: userData.userType,
-                        },
-                    ]);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
 
-                if (profileError) throw profileError;
-            }
+            // Prepare user profile object, removing undefined values
+            const userProfile = {
+                id: user.uid,
+                email: email,
+                username: userData.username,
+                full_name: userData.full_name || null,
+                phone_number: userData.phoneNumber || null,
+                date_of_birth: userData.dateOfBirth || null,
+                user_type: userData.userType || null,
+                createdAt: new Date().toISOString()
+            };
 
-            return { data: authData, error: null };
+            // Remove any remaining undefined fields to prevent Firestore errors
+            Object.keys(userProfile).forEach(key => userProfile[key] === undefined && delete userProfile[key]);
+
+            // Insert additional user data into Firestore
+            await setDoc(doc(db, 'users', user.uid), userProfile);
+
+            return { data: user, error: null };
         } catch (error) {
+            // Handle specific Firebase auth errors if needed
             return { data: null, error };
         }
     };
 
     // Sign in function
     const signIn = async (username, password) => {
-        if (!supabase) {
-            return { data: null, error: { message: 'Supabase is not configured. Please check your .env file.' } };
+        if (!isConfigValid || !auth) {
+            return { data: null, error: { message: 'Firebase is not configured. Please check your .env file.' } };
         }
         try {
             // First, get the email associated with the username
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('email')
-                .eq('username', username)
-                .single();
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('username', '==', username));
+            const querySnapshot = await getDocs(q);
 
-            if (userError || !userData) {
+            if (querySnapshot.empty) {
+                throw new Error('Invalid username or password');
+            }
+
+            let email = null;
+            querySnapshot.forEach((doc) => {
+                email = doc.data().email;
+            });
+
+            if (!email) {
                 throw new Error('Invalid username or password');
             }
 
             // Then sign in with email and password
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: userData.email,
-                password: password,
-            });
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-            if (error) throw error;
-
-            return { data, error: null };
+            return { data: userCredential.user, error: null };
         } catch (error) {
             return { data: null, error };
         }
@@ -118,9 +114,13 @@ export const AuthProvider = ({ children }) => {
 
     // Sign out function
     const signOut = async () => {
-        if (!supabase) return { error: null };
-        const { error } = await supabase.auth.signOut();
-        return { error };
+        if (!auth) return { error: null };
+        try {
+            await firebaseSignOut(auth);
+            return { error: null };
+        } catch (error) {
+            return { error };
+        }
     };
 
     const value = {
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
         signUp,
         signIn,
         signOut,
-        isConfigured: !!supabase,
+        isConfigured: isConfigValid,
     };
 
     return (

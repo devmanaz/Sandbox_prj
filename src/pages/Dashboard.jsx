@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Code2, Folder, Trophy, CheckCircle, LogOut, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../config/supabaseClient';
+import { db } from '../config/firebaseClient';
+import { doc, getDoc } from 'firebase/firestore';
 import { scenarios } from '../data/scenarios';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
@@ -75,25 +75,22 @@ const Dashboard = () => {
         setCompletedProjects(completed);
 
         const fetchUserProfile = async () => {
-            if (!user || !supabase) {
+            if (!user || !db) {
                 setLoading(false);
                 return;
             }
 
             try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('username, full_name, user_type')
-                    .eq('id', user.id)
-                    .single();
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
 
-                if (error) {
-                    console.error('Error fetching user profile:', error);
+                if (docSnap.exists()) {
+                    setUserProfile(docSnap.data());
                 } else {
-                    setUserProfile(data);
+                    console.error('No such document!');
                 }
             } catch (err) {
-                console.error('Error:', err);
+                console.error('Error fetching user profile:', err);
             } finally {
                 setLoading(false);
             }
