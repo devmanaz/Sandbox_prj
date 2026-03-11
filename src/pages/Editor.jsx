@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import Editor, { useMonaco } from '@monaco-editor/react';
 import {
@@ -14,9 +14,11 @@ import {
     MessageCircle,
     Container,
     Wifi,
-    WifiOff
+    WifiOff,
+    Eye
 } from 'lucide-react';
 import AIChatAssistant from '../components/AIChatAssistant';
+import PreviewPane from '../components/PreviewPane';
 import { scenarios } from '../data/scenarios';
 import { executeCode, isSandboxAvailable } from '../services/executionService';
 
@@ -24,6 +26,7 @@ const Ide = () => {
     const { scenarioId } = useParams();
     const navigate = useNavigate();
     const scenario = scenarios.find(s => s.id === scenarioId) || scenarios[0];
+    const isFrontend = scenario.type === 'frontend';
 
     const [activeFile, setActiveFile] = useState(Object.keys(scenario.files)[0]);
     const [files, setFiles] = useState(scenario.files);
@@ -31,12 +34,14 @@ const Ide = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [testsPassed, setTestsPassed] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const [sandboxOnline, setSandboxOnline] = useState(null); // null = checking
+    const [sandboxOnline, setSandboxOnline] = useState(null);
 
-    // Check sandbox API availability on mount
+    // Check sandbox API availability on mount (only needed for backend scenarios)
     useEffect(() => {
-        isSandboxAvailable().then(online => setSandboxOnline(online));
-    }, []);
+        if (!isFrontend) {
+            isSandboxAvailable().then(online => setSandboxOnline(online));
+        }
+    }, [isFrontend]);
 
     // Sync state when scenarioId changes
     useEffect(() => {
@@ -56,7 +61,7 @@ const Ide = () => {
             inherit: true,
             rules: [],
             colors: {
-                'editor.background': '#060606', // deeper dark
+                'editor.background': '#060606',
                 'editor.lineHighlightBackground': '#ffffff08',
                 'editorLineNumber.foreground': '#4b5563',
                 'editorLineNumber.activeForeground': '#7c3aed',
@@ -65,17 +70,31 @@ const Ide = () => {
         monaco.editor.setTheme('custom-dark');
     };
 
+    // Called by PreviewPane when validation result arrives
+    const handlePreviewResult = useCallback(({ passed }) => {
+        setTestsPassed(passed);
+        if (passed) {
+            setOutput('✅ Your preview matches the desired output!\n\nAll visual checks passed. Click "Submit" to complete the scenario. ✨');
+        }
+    }, []);
+
+    // "Run Scenario" for frontend: just trigger a re-validation via key bump
+    // The PreviewPane already reacts to content changes in real-time.
+    // For backend: execute via Docker sandbox.
     const handleRunTests = async () => {
+        if (isFrontend) {
+            // Frontend validation is live — just update output
+            setOutput('🔍 Checking your preview against the desired output…\n(The live preview updates automatically as you type.)');
+            return;
+        }
+
         setIsRunning(true);
         setTestsPassed(false);
         setOutput('⏳ Sending code to Docker sandbox...');
 
-        // Find main logic file (usually .js)
         const mainFileKey = Object.keys(files).find(f => f.endsWith('.js')) || Object.keys(files)[0];
-
         const result = await executeCode(files, mainFileKey, scenario.testCheck);
 
-        // Re-check sandbox status after execution
         isSandboxAvailable().then(online => setSandboxOnline(online));
 
         let outputText = '';
@@ -113,7 +132,6 @@ const Ide = () => {
             completedProjects.push(scenario.id);
             localStorage.setItem('completedProjects', JSON.stringify(completedProjects));
         }
-
         alert('🎉 Scenario Submitted! Great job.');
         navigate('/dashboard');
     };
@@ -127,6 +145,9 @@ const Ide = () => {
             }
         }));
     };
+
+    // Get current file content for the live preview (for frontend scenarios)
+    const liveHtmlContent = isFrontend ? (files[activeFile]?.content || '') : '';
 
     return (
         <div className="relative h-screen flex flex-col bg-[#030303] text-white overflow-hidden font-sans">
@@ -149,25 +170,37 @@ const Ide = () => {
                             <span className={`${scenario.badgeColor.split(' ').slice(0, 2).join(' ')} px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${scenario.badgeColor.split(' ').slice(4).join(' ')} shadow-lg neon-border-magenta`}>
                                 {scenario.difficulty}
                             </span>
+                            {isFrontend && (
+                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border text-blue-400 border-blue-500/30 bg-blue-500/5">
+                                    <Eye size={10} /> Frontend
+                                </span>
+                            )}
                         </div>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Scenario IDE v2.0</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Sandbox Status Indicator */}
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${sandboxOnline === null
-                        ? 'text-slate-500 border-white/10'
-                        : sandboxOnline
-                            ? 'text-green-400 border-green-500/30 bg-green-500/5'
-                            : 'text-red-400 border-red-500/30 bg-red-500/5'
-                        }`}>
-                        {sandboxOnline === null
-                            ? <><Container size={12} /> Checking</>
+                    {/* Sandbox Status Indicator – only for backend scenarios */}
+                    {!isFrontend && (
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${sandboxOnline === null
+                            ? 'text-slate-500 border-white/10'
                             : sandboxOnline
-                                ? <><Wifi size={12} /> Sandbox Live</>
-                                : <><WifiOff size={12} /> API Offline</>}
-                    </div>
+                                ? 'text-green-400 border-green-500/30 bg-green-500/5'
+                                : 'text-red-400 border-red-500/30 bg-red-500/5'
+                            }`}>
+                            {sandboxOnline === null
+                                ? <><Container size={12} /> Checking</>
+                                : sandboxOnline
+                                    ? <><Wifi size={12} /> Sandbox Live</>
+                                    : <><WifiOff size={12} /> API Offline</>}
+                        </div>
+                    )}
+                    {isFrontend && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border text-blue-400 border-blue-500/30 bg-blue-500/5">
+                            <Eye size={12} /> Live Preview
+                        </div>
+                    )}
                     <button
                         className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white glass rounded-xl transition-all text-xs font-black uppercase tracking-widest"
                         onClick={() => setFiles(scenario.files)}
@@ -191,7 +224,7 @@ const Ide = () => {
                         disabled={isRunning}
                         className="flex items-center gap-2 px-8 py-2.5 bg-white text-[#030303] hover:bg-slate-200 rounded-xl transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-white/20"
                     >
-                        <Play size={16} fill="currentColor" /> {isRunning ? 'Running...' : 'Run Scenario'}
+                        <Play size={16} fill="currentColor" /> {isRunning ? 'Running...' : isFrontend ? 'Check Preview' : 'Run Scenario'}
                     </button>
 
                     {testsPassed && (
@@ -220,7 +253,9 @@ const Ide = () => {
                                     : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
                                     }`}
                             >
-                                {filename.endsWith('.js') ? <FileCode size={18} className="text-purple-400" /> : <FileText size={18} className="text-slate-400" />}
+                                {filename.endsWith('.js') || filename.endsWith('.html') || filename.endsWith('.css')
+                                    ? <FileCode size={18} className="text-purple-400" />
+                                    : <FileText size={18} className="text-slate-400" />}
                                 <span className="font-bold tracking-tight">{filename}</span>
                             </button>
                         ))}
@@ -241,18 +276,19 @@ const Ide = () => {
 
                 {/* Editor Area */}
                 <div className="flex-1 flex flex-col min-w-0 bg-[#060606]">
-                    <div className="flex-1 relative">
+                    {/* Monaco Editor */}
+                    <div className={isFrontend ? 'h-1/2 relative border-b border-white/5' : 'flex-1 relative'}>
                         <Editor
                             height="100%"
                             defaultLanguage="javascript"
-                            language={files[activeFile].language}
-                            value={files[activeFile].content}
+                            language={files[activeFile]?.language || 'javascript'}
+                            value={files[activeFile]?.content || ''}
                             onChange={handleEditorChange}
                             theme="custom-dark"
                             options={{
                                 minimap: { enabled: false },
                                 padding: { top: 30 },
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontFamily: "'JetBrains Mono', monospace",
                                 scrollBeyondLastLine: false,
                                 automaticLayout: true,
@@ -266,20 +302,31 @@ const Ide = () => {
                         />
                     </div>
 
-                    {/* Output Console */}
-                    <div className="h-64 glass-dark border-t border-white/5 flex flex-col flex-shrink-0 backdrop-blur-3xl">
-                        <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Compiler Output</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Ready</span>
+                    {/* Bottom Panel: Preview for frontend, Console for backend */}
+                    {isFrontend ? (
+                        <div className="h-1/2 flex flex-col overflow-hidden">
+                            <PreviewPane
+                                htmlContent={liveHtmlContent}
+                                desiredOutput={scenario.desiredOutput}
+                                previewCheck={scenario.previewCheck}
+                                onResult={handlePreviewResult}
+                            />
+                        </div>
+                    ) : (
+                        <div className="h-64 glass-dark border-t border-white/5 flex flex-col flex-shrink-0 backdrop-blur-3xl">
+                            <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Compiler Output</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Ready</span>
+                                </div>
+                            </div>
+                            <div className="flex-1 p-6 font-mono text-sm overflow-auto text-slate-300 leading-relaxed scrollbar-hide">
+                                <div className="text-slate-500 mb-2">$ scenario-shell --run-tests</div>
+                                {output}
                             </div>
                         </div>
-                        <div className="flex-1 p-6 font-mono text-sm overflow-auto text-slate-300 leading-relaxed scrollbar-hide">
-                            <div className="text-slate-500 mb-2">$ scenario-shell --run-tests</div>
-                            {output}
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -289,7 +336,7 @@ const Ide = () => {
                 onClose={() => setIsChatOpen(false)}
                 codeContext={{
                     activeFile,
-                    code: files[activeFile].content,
+                    code: files[activeFile]?.content || '',
                     scenario: scenario.title
                 }}
             />
