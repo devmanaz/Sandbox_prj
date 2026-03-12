@@ -91,6 +91,7 @@ const SignUp = () => {
             }
 
             if (data) {
+                localStorage.clear();
                 setSuccess(true);
                 setTimeout(() => {
                     navigate('/login');

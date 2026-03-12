@@ -37,6 +37,7 @@ const Login = () => {
             }
 
             if (data) {
+                localStorage.clear();
                 navigate('/dashboard');
             }
         } catch (err) {

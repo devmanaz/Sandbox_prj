@@ -117,6 +117,7 @@ export const AuthProvider = ({ children }) => {
         if (!auth) return { error: null };
         try {
             await firebaseSignOut(auth);
+            localStorage.clear();
             return { error: null };
         } catch (error) {
             return { error };
